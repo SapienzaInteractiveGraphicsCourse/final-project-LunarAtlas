@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Moon Tour — Three.js</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+ 
+    body {
+      background: #000;
+      overflow: hidden;
+      font-family: 'Courier New', monospace;
+      color: #ccc;
+    }
+ 
+    #canvas-container {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+ 
+    canvas { display: block; }
+ 
+    /* HUD */
+    #hud {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      right: 24px;
+      display: grid;
+      grid-template-columns: minmax(0, max-content) minmax(0, max-content);
+      column-gap: 32px;
+      align-items: flex-start;
+      padding: 18px 22px;
+      background: radial-gradient(circle at top left, rgba(0,0,0,0.9), rgba(0,0,0,0.08));
+      border-radius: 18px;
+      pointer-events: none;
+      user-select: none;
+    }
+ 
+    #hud > h1,
+    #hud > .control {
+      grid-column: 1;
+    }
+ 
+    #hud > div:last-child {
+      grid-column: 2;
+      align-self: start;
+    }
+ 
+    #hud h1 {
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(200,210,255,0.9);
+      margin-bottom: 18px;
+    }
+ 
+    #hud .control {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: rgba(160,170,210,0.45);
+      line-height: 2;
+    }
+ 
+    #hud .control span {
+      color: rgba(200,220,255,0.75);
+      font-weight: bold;
+    }
+ 
+    #info {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      color: rgba(150,160,200,0.35);
+      text-align: right;
+    }
+ 
+    #loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      z-index: 10;
+      gap: 16px;
+      transition: opacity 0.8s ease;
+    }
+ 
+    #loading.hidden { opacity: 0; pointer-events: none; }
+ 
+    #loading p {
+      font-size: 10px;
+      letter-spacing: 0.4em;
+      color: rgba(200,215,255,0.5);
+      text-transform: uppercase;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+ 
+    .loader-ring {
+      width: 48px;
+      height: 48px;
+      border: 1px solid rgba(200,215,255,0.1);
+      border-top: 1px solid rgba(200,215,255,0.6);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+ 
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+  </style>
+</head>
+<body>
+ 
+<div id="loading">
+  <div class="loader-ring"></div>
+  <p>Loading Moon</p>
+</div>
+ 
+<div id="canvas-container">
+  <div id="hud">
+    <h1>Moon Tour</h1>
+    <div class="control"><span>WASD</span> &nbsp;Rotate</div>
+    <div class="control"><span>SCROLL</span> &nbsp;Zoom</div>
+    <div style="margin-top: 24px; border-top: 1px solid rgba(200,220,255,0.1); padding-top: 16px;">
+    <div id="crater-label" style="
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      color: rgba(220,230,255,0.9);
+      margin-bottom: 6px;
+      transition: opacity 0.4s;
+    ">—</div>
+    <div id="pos-label" style="
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      color: rgba(160,175,220,0.5);
+    ">0.00° N  0.00° E</div>
+  </div>
+  </div>
+  <div id="info">SAPIENZA · INTERACTIVE GRAPHICS</div>
+</div>
+
+<script src="./src/main.js" type="module"></script>
+<input type="file" id="fileInput" accept=".glb,.gltf" />
+<!-- <script src="./src/starfield.js" type="module"></script> -->
