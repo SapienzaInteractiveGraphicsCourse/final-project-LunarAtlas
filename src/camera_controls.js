@@ -1,7 +1,7 @@
 // controls.js
 import * as THREE from 'three';
 
-export class Controls {
+export class CameraControl {
   constructor(renderer, camera, W, H, moon_radius) {
     this.renderer = renderer;
     this.camera = camera;
@@ -10,14 +10,15 @@ export class Controls {
     this.moon_radius = moon_radius;
 
     this.walker = {
-      lon: 0.3,
-      lat: 0.5,
+      lon: 0,
+      lat: 0,
       altitude: 10,
+      targetAltitude: 10,
       speed: 0.003,
       keys: {}
     };
 
-    this.WALKER_MIN_ALTITUDE = 0.3;
+    this.WALKER_MIN_ALTITUDE = 2;
     this.WALKER_MAX_ALTITUDE = 50;
 
     this.canvas = renderer.domElement;
@@ -26,12 +27,8 @@ export class Controls {
     this.lastMY = 0;
 
     this._up = new THREE.Vector3();
-    this._east = new THREE.Vector3();
-    this._north = new THREE.Vector3();
     this._camPos = new THREE.Vector3();
     this._lookTarget = new THREE.Vector3();
-    this._forward = new THREE.Vector3();
-    this._worldUp = new THREE.Vector3(0, 1, 0);
 
     this.onWheel = this.onWheel.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
@@ -46,10 +43,12 @@ export class Controls {
 
   onWheel(e) {
     e.preventDefault();
-    const step = e.deltaY * 0.02;
-    this.walker.altitude = Math.max(
+
+    const zoomDelta = e.deltaY * 0.02;
+
+    this.walker.targetAltitude = Math.max(
       this.WALKER_MIN_ALTITUDE,
-      Math.min(this.WALKER_MAX_ALTITUDE, this.walker.altitude + step)
+      Math.min(this.WALKER_MAX_ALTITUDE, this.walker.targetAltitude + zoomDelta)
     );
   }
 
@@ -68,6 +67,15 @@ export class Controls {
   }
 
   updateCamera() {
+
+    // Smooth zoom (lerp)
+    this.walker.altitude = THREE.MathUtils.lerp(
+      this.walker.altitude,
+      this.walker.targetAltitude,
+      0.05 // smoothing factor
+    );
+
+    //Change camera position
     this._up.set(
       Math.cos(this.walker.lat) * Math.sin(this.walker.lon),
       Math.sin(this.walker.lat),
@@ -93,5 +101,13 @@ export class Controls {
     const spd = this.walker.speed;
     this.walker.lon += strafe * spd;
     this.walker.lat += fwd * spd;
+
+    // Clamp latitude to [-90°, 90°] in radians
+    const HALF_PI = Math.PI / 2;
+    this.walker.lat = Math.max(-HALF_PI, Math.min(HALF_PI, this.walker.lat));
+
+    // Wrap longitude to (-180°, 180°] in radians
+    const PI = Math.PI;
+    this.walker.lon = ((this.walker.lon + PI) % (2 * PI) + (2 * PI)) % (2 * PI) - PI;
   }
 }

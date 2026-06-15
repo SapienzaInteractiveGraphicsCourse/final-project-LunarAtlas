@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Moon Tour — Three.js</title>
+  <title>Moon Tour</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
  
@@ -25,15 +25,14 @@
     /* HUD */
     #hud {
       position: absolute;
-      top: 24px;
-      left: 24px;
-      right: 24px;
+      top: 15px;
+      left: 15px;
       display: grid;
-      grid-template-columns: minmax(0, max-content) minmax(0, max-content);
-      column-gap: 32px;
+      grid-template-columns: max-content;
+      row-gap: 0px;
       align-items: flex-start;
       padding: 18px 22px;
-      background: radial-gradient(circle at top left, rgba(0,0,0,0.9), rgba(0,0,0,0.08));
+      background: rgba(0,0,0,0.8);
       border-radius: 18px;
       pointer-events: none;
       user-select: none;
@@ -45,38 +44,54 @@
     }
  
     #hud > div:last-child {
-      grid-column: 2;
+      grid-column: 1;
       align-self: start;
     }
  
     #hud h1 {
-      font-size: 11px;
+      font-size: 14px;
       letter-spacing: 0.3em;
       text-transform: uppercase;
-      color: rgba(200,210,255,0.9);
+      color: rgba(255,255,255,1);
       margin-bottom: 18px;
+      font-weight: bold;
     }
  
     #hud .control {
       font-size: 10px;
       letter-spacing: 0.15em;
-      color: rgba(160,170,210,0.45);
+      color: rgba(255,255,255,0.8);
       line-height: 2;
+      font-weight: lighter;
+    }
+
+    #hud .control span{
+      font-size: 12px;
+      letter-spacing: 0.15em;
     }
  
-    #hud .control span {
-      color: rgba(200,220,255,0.75);
-      font-weight: bold;
-    }
  
     #info {
       position: absolute;
-      bottom: 24px;
-      right: 24px;
-      font-size: 9px;
+      top: 15px;
+      right: 15px;
+      font-size: 10px;
       letter-spacing: 0.25em;
-      color: rgba(150,160,200,0.35);
       text-align: right;
+      font-weight: bold;
+      background: rgba(0,0,0,0.8);
+      row-gap: 5px;
+      padding: 18px 22px;
+      border-radius: 18px;
+      min-width: 150px;
+    }
+
+    #pos-label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      color: rgba(160,175,220,0.8);
+      font-size: 10px;
     }
  
     #loading {
@@ -113,6 +128,76 @@
  
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+    /* ── 3D Moon Labels ── */
+    #label-container {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .moon-label {
+      position: absolute;
+      top: 0; left: 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transform-origin: left center;
+      white-space: nowrap;
+      will-change: transform, opacity;
+      transition: opacity 0.12s ease;
+    }
+
+    .moon-label__dot {
+      flex-shrink: 0;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      border: 1px solid currentColor;
+    }
+
+    .moon-label__text {
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      text-shadow: 0 0 8px rgba(0,0,0,1), 0 1px 4px rgba(0,0,0,1);
+    }
+
+    /* Crater — light cyan, like NASA Trek */
+    .moon-label--crater {
+      color: rgba(160, 220, 255, 0.92);
+    }
+    .moon-label--crater .moon-label__dot {
+      background: rgba(120, 200, 255, 0.7);
+    }
+
+    /* Mare — muted amber/gold */
+    .moon-label--mare {
+      color: rgba(255, 210, 130, 0.85);
+    }
+    .moon-label--mare .moon-label__text {
+      font-size: 10px;
+      letter-spacing: 0.22em;
+    }
+    .moon-label--mare .moon-label__dot {
+      width: 7px; height: 7px;
+      background: rgba(255, 200, 80, 0.55);
+    }
+
+    /* Apollo landing sites — green */
+    .moon-label--landing {
+      color: rgba(120, 255, 160, 0.95);
+    }
+    .moon-label--landing .moon-label__dot {
+      width: 6px; height: 6px;
+      background: rgba(80, 255, 120, 0.8);
+      border-radius: 2px;
+    }
+    .moon-label--landing .moon-label__text {
+      font-size: 8px;
+    }
   </style>
 </head>
 <body>
@@ -123,28 +208,27 @@
 </div>
  
 <div id="canvas-container">
+  <!-- 3D label overlay — populated by JS -->
+  <div id="label-container"></div>
+
   <div id="hud">
     <h1>Moon Tour</h1>
-    <div class="control"><span>WASD</span> &nbsp;Rotate</div>
-    <div class="control"><span>SCROLL</span> &nbsp;Zoom</div>
-    <div style="margin-top: 24px; border-top: 1px solid rgba(200,220,255,0.1); padding-top: 16px;">
-    <div id="crater-label" style="
-      font-size: 13px;
-      letter-spacing: 0.2em;
-      color: rgba(220,230,255,0.9);
-      margin-bottom: 6px;
-      transition: opacity 0.4s;
-    ">—</div>
-    <div id="pos-label" style="
-      font-size: 9px;
-      letter-spacing: 0.25em;
-      color: rgba(160,175,220,0.5);
-    ">0.00° N  0.00° E</div>
+    <div class="control"><span>WASD</span> Rotate</div>
+    <div class="control"><span>SCROLL</span> Zoom</div>
+    <div class="control" style="margin-top:10px; font-size:8px; color:rgba(255,255,255,0.4);">
+      <span style="color:rgba(160,220,255,0.7);">●</span> Crater &nbsp;
+      <span style="color:rgba(255,210,130,0.7);">●</span> Mare &nbsp;
+      <span style="color:rgba(120,255,160,0.8);">▪</span> Apollo
+    </div>
   </div>
+
+  <div id="info">
+    <div id="crater-label"></div>
+    <div id="pos-label">
+      <span id="lat">0.00°</span>
+      <span id="lon">0.00°</span>
+    </div>
   </div>
-  <div id="info">SAPIENZA · INTERACTIVE GRAPHICS</div>
 </div>
 
 <script src="./src/main.js" type="module"></script>
-<input type="file" id="fileInput" accept=".glb,.gltf" />
-<!-- <script src="./src/starfield.js" type="module"></script> -->

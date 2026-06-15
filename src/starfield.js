@@ -15,8 +15,6 @@ export function buildStars(scene) {
     pos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
     pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
     pos[i*3+2] = r * Math.cos(phi);
-
-    sizes[i]   = Math.random() * 1.5 + 0.3;
   }
 
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -27,7 +25,7 @@ export function buildStars(scene) {
     size: 0.5,
     sizeAttenuation: true,
     transparent: true,
-    opacity: 1,
+    opacity: 0.85,
   });
 
   const stars = new THREE.Points(geo, mat);
