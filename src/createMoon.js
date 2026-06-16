@@ -27,7 +27,14 @@ export function createMoon(renderer, moon_radius) {
     tex.needsUpdate = true;
   });
 
-  const bumpMap = texLoader.load("./src/assets/ldem_64.png");
+  const bumpMap = texLoader.load("./src/assets/ldem_64.png", tex => {
+    tex.anisotropy = maxAniso;
+    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.minFilter = THREE.LinearMipMapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.generateMipmaps = true;
+    tex.needsUpdate = true;
+  });
 
   const moonMat = new THREE.MeshStandardMaterial({
     map: colorMap,
