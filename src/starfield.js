@@ -60,7 +60,7 @@ export function buildStars(scene) {
     colors[i * 3 + 2] = b_color;
 
     // Size based on magnitude (apparent brightness)
-    sizes[i] = Math.max(0.3, brightness * 1.8 + Math.random() * 0.5);
+    sizes[i] = Math.max(0.3, brightness * 1.8);
   }
 
   const geo = new THREE.BufferGeometry();

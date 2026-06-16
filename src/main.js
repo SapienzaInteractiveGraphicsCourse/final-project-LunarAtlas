@@ -184,6 +184,7 @@ const FEATURES = [
   { name: "Mare Frigoris",      lat:  56.0, lon:    1.4, type: 'mare' },
   { name: "Mare Marginis",      lat:  13.3, lon:   86.1, type: 'mare' },
   { name: "Mare Anguis",        lat:  22.6, lon:   67.7, type: 'mare' },
+  { name: "Mare Orientale",     lat: -20.0, lon:  -95.0, type: 'mare' },
   // Apollo Landing Sites
   { name: "Apollo 11",          lat:   0.67, lon:  23.47, type: 'landing' },
   { name: "Apollo 12",          lat:  -3.01, lon: -23.42, type: 'landing' },
@@ -201,12 +202,11 @@ const _labelVec = new THREE.Vector3();
 const featureData = FEATURES.map(f => {
   const latR = f.lat * Math.PI / 180;
   const lonR = f.lon * Math.PI / 180;
-  // Moon is rotated -PI/2 on Y, so we counter-rotate the lon
-  const adjLon = lonR + Math.PI / 2;
+  
   const worldPos = new THREE.Vector3(
-    moon_radius * Math.cos(latR) * Math.cos(adjLon),
+    moon_radius * Math.cos(latR) * Math.sin(lonR),
     moon_radius * Math.sin(latR),
-    moon_radius * Math.cos(latR) * Math.sin(adjLon)
+    moon_radius * Math.cos(latR) * Math.cos(lonR)
   );
   const el = document.createElement('div');
   el.className = `moon-label moon-label--${f.type}`;
