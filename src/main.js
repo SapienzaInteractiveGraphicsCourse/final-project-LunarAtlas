@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { buildStars } from './starfield.js';
 import { createMoon } from './create_moon.js';
+import { createMoonAtmoshpere } from './moon_atmosphere.js';
 import { CameraControl } from './camera_controls.js';
 import { setupLighting } from './lighting.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -34,19 +35,10 @@ buildStars(scene);
 // ─── Moon ────────────────────────────────────────────────────────────────
 const moon_radius = 10;
 const moon = createMoon(renderer, moon_radius);
-
 scene.add(moon);
 
-// ─── Subtle Atmosphere Glow ───────────────────────────────────────────────────
-const atmGeo = new THREE.SphereGeometry(moon_radius+0.2, 64, 64);
-const atmMat = new THREE.MeshBasicMaterial({
-  color: 0xaabbdd,
-  transparent: true,
-  opacity: 0.035,
-  side: THREE.FrontSide,
-  depthWrite: false,
-});
-scene.add(new THREE.Mesh(atmGeo, atmMat));
+// Subtle Atmosphere Glow
+scene.add(createMoonAtmoshpere(moon_radius))
  
 
 // ─── Lighting ─────────────────────────────────────────────────────────────────
@@ -129,85 +121,8 @@ window.addEventListener('resize', () => {
 document.getElementById('loading').classList.add('hidden');
 ctrl.updateCamera();
 
-// ─── Right-Click Landing System ───────────────────────────────────────────
-const landingPopup = document.getElementById('landing-popup');
-const landingCoords = document.getElementById('landing-popup-coords');
-const landingBtnConfirm = document.getElementById('landing-btn-confirm');
-const landingBtnCancel = document.getElementById('landing-btn-cancel');
-
-let pendingLanding = null;
-
-function screenToMoonCoords(screenX, screenY) {
-  // Normalize to NDC (-1 to 1)
-  const x = (screenX / W()) * 2 - 1;
-  const y = -(screenY / H()) * 2 + 1;
-  
-  // Create ray from camera through the screen point
-  const raycaster = new THREE.Raycaster();
-  raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
-  
-  // Intersect with moon sphere
-  const moonSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), moon_radius);
-  const intersection = new THREE.Vector3();
-  raycaster.ray.intersectSphere(moonSphere, intersection);
-  
-  if (!intersection) return null;
-  
-  // Convert 3D world position to lat/lon
-  const lat = Math.asin(intersection.y / moon_radius);
-  const lon = Math.atan2(intersection.x, intersection.z);
-  
-  return { lat, lon, x: intersection.x, y: intersection.y, z: intersection.z };
-}
-
-function showLandingPopup(screenX, screenY, coords) {
-  const latDeg = (coords.lat * 180 / Math.PI).toFixed(2);
-  const lonDeg = (coords.lon * 180 / Math.PI).toFixed(2);
-  const ns = latDeg >= 0 ? 'N' : 'S';
-  const ew = lonDeg >= 0 ? 'E' : 'W';
-  
-  landingCoords.innerHTML = `
-    LAT: ${ns}${Math.abs(latDeg)}°<br>
-    LON: ${ew}${Math.abs(lonDeg)}°
-  `;
-  
-  landingPopup.classList.add('visible');
-  landingPopup.style.left = screenX + 'px';
-  landingPopup.style.top = screenY + 'px';
-  
-  pendingLanding = { lat: coords.lat, lon: coords.lon };
-}
-
-function hideLandingPopup() {
-  landingPopup.classList.remove('visible');
-  pendingLanding = null;
-}
-
-function confirmLanding() {
-  if (!pendingLanding) return;
-  
-  ctrl.walker.lat = pendingLanding.lat;
-  ctrl.walker.lon = pendingLanding.lon;
-  ctrl.walker.targetAltitude = Math.max(2.5, Math.min(8, ctrl.walker.altitude));
-  
-  hideLandingPopup();
-}
-
-container.addEventListener('contextmenu', (e) => {
-  e.preventDefault();
-  
-  const coords = screenToMoonCoords(e.clientX, e.clientY);
-  if (coords) {
-    showLandingPopup(e.clientX, e.clientY, coords);
-  }
-});
-
-landingBtnConfirm.addEventListener('click', confirmLanding);
-landingBtnCancel.addEventListener('click', hideLandingPopup);
-
 // Close popup on ESC
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') hideLandingPopup();
   
   // Camera switching with 'C' key
   if (e.key.toLowerCase() === 'c') {

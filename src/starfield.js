@@ -89,8 +89,8 @@ function addEarthAndSun(scene) {
   
   // Position Earth in the sky (at an angle from the moon)
   // Earth appears in the lunar sky at roughly this position
-  const earthAngle = Math.PI * 0.3; // 54 degrees
-  const earthElevation = Math.PI * 0.2; // 36 degrees above equator
+  const earthAngle = 0; // 54 degrees
+  const earthElevation = 0; // 36 degrees above equator
   
   const earth_x = earthMoonDistance * Math.cos(earthElevation) * Math.cos(earthAngle);
   const earth_y = earthMoonDistance * Math.sin(earthElevation);
