@@ -96,10 +96,12 @@ function addEarthAndSun(scene) {
   const earth_y = earthMoonDistance * Math.sin(earthElevation);
   const earth_z = earthMoonDistance * Math.cos(earthElevation) * Math.sin(earthAngle);
   
-  // Create Earth with realistic blue and green colors
+  // Create Earth with texture
   const earthGeo = new THREE.SphereGeometry(earthRadius, 64, 64);
+  const textureLoader = new THREE.TextureLoader();
+  const earthTexture = textureLoader.load('./src/assets/earth_texture.jpg');
   const earthMat = new THREE.MeshPhongMaterial({
-    color: 0x4a90e2, // Ocean blue
+    map: earthTexture,
     emissive: 0x1a3a52,
     shininess: 30,
     side: THREE.FrontSide,
