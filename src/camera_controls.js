@@ -60,9 +60,13 @@ export class CameraControl {
     this.walker.keys[e.code] = false;
   }
 
-  onResize() {
+  onResize(apolloCamera) {
     this.camera.aspect = this.W() / this.H();
     this.camera.updateProjectionMatrix();
+    if (apolloCamera) {
+      apolloCamera.aspect = this.W() / this.H();
+      apolloCamera.updateProjectionMatrix();
+    }
     this.renderer.setSize(this.W(), this.H());
   }
 

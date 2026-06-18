@@ -2,7 +2,6 @@
 import * as THREE from 'three';
 
 export function createMoon(renderer, moon_radius) {
-//   const moon_radius = 10;
   const moonGeo = new THREE.SphereGeometry(moon_radius, 512, 256);
   const texLoader = new THREE.TextureLoader();
   const maxAniso = renderer.capabilities.getMaxAnisotropy();

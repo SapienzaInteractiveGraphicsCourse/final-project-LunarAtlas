@@ -2,47 +2,39 @@
 import * as THREE from 'three';
 
 export function buildStars(scene) {
-  // Realistic star catalog with proper distribution and magnitudes
-  const starCount = 8000;
+  
+  // Create realistic starfield very far away
+  const starCount = 10000;
   const positions = new Float32Array(starCount * 3);
   const colors = new Float32Array(starCount * 3);
   const sizes = new Float32Array(starCount);
 
+  // Distance from origin where stars are placed
+  const starDistance = 800;
+
   for (let i = 0; i < starCount; i++) {
-    // Uniform sphere distribution
+    // Uniform sphere distribution on a distant sphere
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
-    const r = 200 + Math.random() * 350;
 
-    positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-    positions[i * 3 + 2] = r * Math.cos(phi);
+    positions[i * 3] = starDistance * Math.sin(phi) * Math.cos(theta);
+    positions[i * 3 + 1] = starDistance * Math.sin(phi) * Math.sin(theta);
+    positions[i * 3 + 2] = starDistance * Math.cos(phi);
 
     // Apparent magnitude distribution (brighter stars are rarer)
-    // Simulated using power law
-    const magnitude = Math.pow(Math.random(), 1.5) * 6; // 0-6 magnitude scale
+    // Power law distribution favoring dimmer stars
+    const magnitude = Math.pow(Math.random(), 2) * 6; // 0-6 magnitude scale
     const brightness = Math.pow(10, -magnitude / 2.5); // Convert to linear brightness
 
-    // Star color variation based on temperature (cooler = red, hotter = blue)
-    // Rough temperature classification
+    // Star color variation based on temperature
     const temp = Math.random();
     let r_color, g_color, b_color;
 
-    if (temp < 0.1) {
-      // Red dwarfs (M class) - cooler stars, more common
-      r_color = 1.0;
-      g_color = 0.4 + Math.random() * 0.2;
-      b_color = 0.3 + Math.random() * 0.15;
-    } else if (temp < 0.35) {
-      // Orange stars (K class)
-      r_color = 1.0;
-      g_color = 0.65 + Math.random() * 0.15;
-      b_color = 0.35 + Math.random() * 0.15;
-    } else if (temp < 0.7) {
-      // Yellow/White stars (G/F class, like our Sun)
-      r_color = 1.0;
-      g_color = 0.9 + Math.random() * 0.1;
-      b_color = 0.7 + Math.random() * 0.15;
+    if (temp < 0.7) {
+      // White stars (G/F class, like our Sun)
+      r_color = 1;
+      g_color = 1;
+      b_color = 1;
     } else if (temp < 0.9) {
       // Blue-white stars (A class)
       r_color = 0.9 + Math.random() * 0.1;
@@ -60,7 +52,7 @@ export function buildStars(scene) {
     colors[i * 3 + 2] = b_color;
 
     // Size based on magnitude (apparent brightness)
-    sizes[i] = Math.max(0.3, brightness * 1.8);
+    sizes[i] = Math.max(0.1, brightness * 1.2);
   }
 
   const geo = new THREE.BufferGeometry();
@@ -70,114 +62,125 @@ export function buildStars(scene) {
 
   const mat = new THREE.PointsMaterial({
     vertexColors: true,
-    size: 1,
+    size: 2.5,
     sizeAttenuation: true,
     transparent: true,
-    opacity: 0.9,
+    opacity: 1,
     fog: false,
   });
 
   const stars = new THREE.Points(geo, mat);
   scene.add(stars);
 
-  // Add planets visible from near Earth/Moon
-  addPlanets(scene);
+  // Add celestial bodies
+  addEarthAndSun(scene);
 }
 
-function addPlanets(scene) {
-  // Planets' approximate positions relative to Earth's orbital plane
-  // Scaled for visibility in our scene
-  const planets = [
-    {
-      name: 'Mercury',
-      distance: 50,
-      angle: 0.2,
-      size: 0.4,
-      color: 0x888888,
-    },
-    {
-      name: 'Venus',
-      distance: 80,
-      angle: 1.8,
-      size: 0.8,
-      color: 0xffd700,
-    },
-    {
-      name: 'Mars',
-      distance: 120,
-      angle: 4.5,
-      size: 0.5,
-      color: 0xff6347,
-    },
-    {
-      name: 'Jupiter',
-      distance: 160,
-      angle: 2.1,
-      size: 2.0,
-      color: 0xc88b3a,
-    },
-    {
-      name: 'Saturn',
-      distance: 190,
-      angle: 5.2,
-      size: 1.6,
-      color: 0xf4a460,
-    },
-  ];
-
-  planets.forEach((planet) => {
-    const x = planet.distance * Math.cos(planet.angle);
-    const y = planet.distance * Math.sin(planet.angle) * 0.3; // Slight elevation
-    const z = planet.distance * Math.sin(planet.angle) * 0.9;
-
-    // Create glow sphere for the planet
-    const geo = new THREE.SphereGeometry(planet.size, 32, 32);
-    const mat = new THREE.MeshBasicMaterial({
-      color: planet.color,
-      emissive: planet.color,
-      emissiveIntensity: 0.3,
-    });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(x, y, z);
-    mesh.userData.isPlanet = true;
-    mesh.userData.name = planet.name;
-    scene.add(mesh);
-
-    // Add a subtle glow layer
-    const glowGeo = new THREE.SphereGeometry(planet.size * 1.3, 16, 16);
-    const glowMat = new THREE.MeshBasicMaterial({
-      color: planet.color,
-      transparent: true,
-      opacity: 0.15,
-      side: THREE.BackSide,
-    });
-    const glow = new THREE.Mesh(glowGeo, glowMat);
-    glow.position.copy(mesh.position);
-    scene.add(glow);
+function addEarthAndSun(scene) {
+  // Moon radius from main.js is 10 units
+  // Real Earth-Moon distance: ~384,400 km
+  // Real Moon radius: 1,737 km, Real Earth radius: 6,371 km
+  // Scale factor: 10 / 1,737 ≈ 0.00576 units/km
+  // Scaled Earth-Moon distance: 384,400 * 0.00576 ≈ 2,214 units
+  
+  const moonRadius = 10;
+  const earthMoonDistance = 240; // Scaled for visibility while maintaining realism
+  const earthRadius = 6.371; // Scaled relative to moon (6,371/1,737 * 10)
+  
+  // Position Earth in the sky (at an angle from the moon)
+  // Earth appears in the lunar sky at roughly this position
+  const earthAngle = Math.PI * 0.3; // 54 degrees
+  const earthElevation = Math.PI * 0.2; // 36 degrees above equator
+  
+  const earth_x = earthMoonDistance * Math.cos(earthElevation) * Math.cos(earthAngle);
+  const earth_y = earthMoonDistance * Math.sin(earthElevation);
+  const earth_z = earthMoonDistance * Math.cos(earthElevation) * Math.sin(earthAngle);
+  
+  // Create Earth with realistic blue and green colors
+  const earthGeo = new THREE.SphereGeometry(earthRadius, 64, 64);
+  const earthMat = new THREE.MeshPhongMaterial({
+    color: 0x4a90e2, // Ocean blue
+    emissive: 0x1a3a52,
+    shininess: 30,
+    side: THREE.FrontSide,
   });
-
-  // Add the Sun in the background (distant bright point)
-  const sunGeo = new THREE.SphereGeometry(3, 32, 32);
+  
+  const earth = new THREE.Mesh(earthGeo, earthMat);
+  earth.position.set(earth_x, earth_y, earth_z);
+  earth.userData.isEarth = true;
+  earth.userData.name = 'Earth';
+  scene.add(earth);
+  
+  // Add cloud layer to Earth
+  const cloudGeo = new THREE.SphereGeometry(earthRadius * 1.02, 64, 64);
+  const cloudMat = new THREE.MeshPhongMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.3,
+    shininess: 10,
+  });
+  const clouds = new THREE.Mesh(cloudGeo, cloudMat);
+  clouds.position.copy(earth.position);
+  scene.add(clouds);
+  
+  // Add slight glow to Earth atmosphere
+  const atmosphereGeo = new THREE.SphereGeometry(earthRadius * 1.08, 32, 32);
+  const atmosphereMat = new THREE.MeshBasicMaterial({
+    color: 0x87ceeb,
+    transparent: true,
+    opacity: 0.15,
+    side: THREE.BackSide,
+  });
+  const atmosphere = new THREE.Mesh(atmosphereGeo, atmosphereMat);
+  atmosphere.position.copy(earth.position);
+  scene.add(atmosphere);
+  
+  // Sun positioning - approximately 150 million km away (400x Earth-Moon distance)
+  const sunDistance = earthMoonDistance * 300;
+  
+  // Sun is roughly opposite to Earth from the Moon during certain times
+  // Position at angle to create realistic lighting
+  const sunAngle = Math.PI * 1.1;
+  const sunElevation = Math.PI * 0.15;
+  
+  const sun_x = sunDistance * Math.cos(sunElevation) * Math.cos(sunAngle);
+  const sun_y = sunDistance * Math.sin(sunElevation);
+  const sun_z = sunDistance * Math.cos(sunElevation) * Math.sin(sunAngle);
+  
+  // Create Sun
+  const sunGeo = new THREE.SphereGeometry(20, 32, 32);
   const sunMat = new THREE.MeshBasicMaterial({
-    color: 0xffff99,
-    emissive: 0xffff99,
+    color: 0xfdb813,
+    emissive: 0xfdb813,
     emissiveIntensity: 1.0,
   });
   const sun = new THREE.Mesh(sunGeo, sunMat);
-  sun.position.set(250, 50, -150);
-  sun.userData.isPlanet = true;
+  sun.position.set(sun_x, sun_y, sun_z);
+  sun.userData.isSun = true;
   sun.userData.name = 'Sun';
   scene.add(sun);
-
-  // Sun glow
-  const sunGlowGeo = new THREE.SphereGeometry(6, 16, 16);
+  
+  // Add sun glow/corona
+  const sunGlowGeo = new THREE.SphereGeometry(40, 16, 16);
   const sunGlowMat = new THREE.MeshBasicMaterial({
-    color: 0xffff99,
+    color: 0xfdb813,
     transparent: true,
-    opacity: 0.1,
+    opacity: 0.2,
     side: THREE.BackSide,
   });
   const sunGlow = new THREE.Mesh(sunGlowGeo, sunGlowMat);
   sunGlow.position.copy(sun.position);
   scene.add(sunGlow);
+  
+  // Rotate Earth continuously
+  function animateEarth() {
+    if (earth) {
+      earth.rotation.y += 0.0001;
+    }
+    if (clouds) {
+      clouds.rotation.y += 0.0002;
+    }
+    requestAnimationFrame(animateEarth);
+  }
+  animateEarth();
 }

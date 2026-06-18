@@ -22,6 +22,11 @@ const scene = new THREE.Scene();
  
 const camera = new THREE.PerspectiveCamera(45, W() / H(), 0.1, 1000);
 camera.position.set(0, 0, 3.5);
+
+// ─── Secondary Camera (Apollo Follower) ───────────────────────────────────────
+const apolloCamera = new THREE.PerspectiveCamera(60, W() / H(), 0.1, 1000);
+let activeCamera = camera;
+let cameraMode = 'walker'; // 'walker' or 'apollo'
  
 // ─── Starfield ────────────────────────────────────────────────────────────────
 buildStars(scene);
@@ -91,11 +96,35 @@ function OrbitingAnimation(){
   // face the moon the right way
   lm.lookAt(0, 0, 0);
   lm.rotateZ(Math.PI / 2);
+
+  // Update Apollo camera to follow the lander
+  updateApolloCamera();
+}
+
+function updateApolloCamera() {
+  if (!lm) return;
+  
+  // Position camera slightly behind and above the lander, looking at the moon
+  const lmPos = lm.position.clone();
+  const lmToMoon = new THREE.Vector3(0, 0, 0).sub(lmPos).normalize();
+  
+  // Place camera offset from the lander (behind and slightly offset)
+  const cameraOffset = new THREE.Vector3().copy(lmPos).normalize().multiplyScalar(1.2);
+  const cameraPos = lmPos.clone().add(cameraOffset);
+  
+  apolloCamera.position.copy(cameraPos);
+  apolloCamera.lookAt(0, 0, 0);
 }
 
 // ─── Camera Controls (manual implementation) ──────────────────────────────────
 
 const ctrl = new CameraControl(renderer, camera, W, H, moon_radius);
+
+// Handle Apollo camera resizing
+window.addEventListener('resize', () => {
+  apolloCamera.aspect = W() / H();
+  apolloCamera.updateProjectionMatrix();
+});
 
 document.getElementById('loading').classList.add('hidden');
 ctrl.updateCamera();
@@ -179,6 +208,15 @@ landingBtnCancel.addEventListener('click', hideLandingPopup);
 // Close popup on ESC
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') hideLandingPopup();
+  
+  // Camera switching with 'C' key
+  if (e.key.toLowerCase() === 'c') {
+    cameraMode = cameraMode === 'walker' ? 'apollo' : 'walker';
+    activeCamera = cameraMode === 'walker' ? camera : apolloCamera;
+    activeCamera.aspect = W() / H();
+    activeCamera.updateProjectionMatrix();
+    console.log('Switched to', cameraMode, 'camera');
+  }
 });
 
 // ─── 3D Label Overlay ─────────────────────────────────────────────────────────
@@ -204,7 +242,7 @@ const featureData = FEATURES.map(f => {
 
 function updateLabels() {
   const camDir = new THREE.Vector3();
-  camera.getWorldDirection(camDir);
+  activeCamera.getWorldDirection(camDir);
   const w = window.innerWidth;
   const h = window.innerHeight;
 
@@ -227,7 +265,7 @@ function updateLabels() {
 
     // Project to screen space
     _labelVec.copy(f.worldPos);
-    _labelVec.project(camera);
+    _labelVec.project(activeCamera);
 
     const sx = ( _labelVec.x * 0.5 + 0.5) * w;
     const sy = (-_labelVec.y * 0.5 + 0.5) * h;
@@ -273,15 +311,17 @@ function getNearestCrater(lat, lon) {
 const craterLabel = document.getElementById('crater-label');
 const latLabel    = document.getElementById('lat');
 const lonLabel    = document.getElementById('lon');
+const cameraModeLabel = document.getElementById('camera-mode');
 
 function animate(){
   requestAnimationFrame(animate);
   ctrl.processWalk();
   ctrl.updateCamera();
-  renderer.render(scene,camera);
-
+  
   //Orbiting Animation
   OrbitingAnimation();
+
+  renderer.render(scene, activeCamera);
 
   // Update location HUD
   const latDeg = (ctrl.walker.lat * 180 / Math.PI).toFixed(2);
@@ -294,6 +334,9 @@ function animate(){
   const crater = getNearestCrater(ctrl.walker.lat, ctrl.walker.lon);
   craterLabel.textContent  = crater ? crater.name : '—';
   craterLabel.style.opacity = crater ? '1' : '0.3';
+
+  // Update camera mode display
+  cameraModeLabel.textContent = `CAMERA: ${cameraMode.toUpperCase()}`;
 
   // Update 3D labels on screen
   updateLabels();
