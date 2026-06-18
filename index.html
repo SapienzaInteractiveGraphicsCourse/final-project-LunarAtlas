@@ -240,6 +240,78 @@
       background: rgba(160, 220, 255, 0.8);
       border-radius: 50%;
     }
+
+    /* Landing Popup */
+    #landing-popup {
+      position: fixed;
+      display: none;
+      background: rgba(0, 0, 0, 0.95);
+      border: 2px solid rgba(160, 220, 255, 0.8);
+      border-radius: 12px;
+      padding: 20px;
+      z-index: 100;
+      min-width: 240px;
+      box-shadow: 0 0 20px rgba(160, 220, 255, 0.3);
+    }
+
+    #landing-popup.visible {
+      display: block;
+    }
+
+    #landing-popup-title {
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      color: rgba(160, 220, 255, 1);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    #landing-popup-coords {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: rgba(160, 220, 255, 0.7);
+      text-align: center;
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+
+    #landing-popup-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .landing-btn {
+      padding: 8px 16px;
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      border: 1px solid rgba(160, 220, 255, 0.7);
+      border-radius: 6px;
+      background: rgba(160, 220, 255, 0.1);
+      color: rgba(160, 220, 255, 0.9);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Courier New', monospace;
+    }
+
+    .landing-btn:hover {
+      background: rgba(160, 220, 255, 0.25);
+      border-color: rgba(160, 220, 255, 1);
+    }
+
+    .landing-btn.confirm {
+      background: rgba(80, 200, 100, 0.2);
+      border-color: rgba(120, 255, 160, 0.8);
+      color: rgba(120, 255, 160, 1);
+    }
+
+    .landing-btn.confirm:hover {
+      background: rgba(80, 200, 100, 0.35);
+      border-color: rgba(120, 255, 160, 1);
+    }
   </style>
 </head>
 <body>
@@ -258,6 +330,16 @@
     <div class="crosshair-line crosshair-h"></div>
     <div class="crosshair-line crosshair-v"></div>
     <div class="crosshair-center"></div>
+  </div>
+
+  <!-- Landing Popup -->
+  <div id="landing-popup">
+    <div id="landing-popup-title">Land Here?</div>
+    <div id="landing-popup-coords"></div>
+    <div id="landing-popup-buttons">
+      <button class="landing-btn" id="landing-btn-cancel">Cancel</button>
+      <button class="landing-btn confirm" id="landing-btn-confirm">Land</button>
+    </div>
   </div>
 
   <div id="hud">

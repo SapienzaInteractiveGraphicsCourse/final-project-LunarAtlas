@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 import { buildStars } from './starfield.js';
-import { createMoon } from './createMoon.js';
+import { createMoon } from './create_moon.js';
 import { CameraControl } from './camera_controls.js';
+import { setupLighting } from './lighting.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { FEATURES } from './features_database.js';
 
 // ─── Scene Setup ─────────────────────────────────────────────────────────────
 const container = document.getElementById('canvas-container');
@@ -24,16 +26,6 @@ camera.position.set(0, 0, 3.5);
 // ─── Starfield ────────────────────────────────────────────────────────────────
 buildStars(scene);
 
-// Simple seedable RNG (mulberry32)
-// function mulberry32(seed) {
-//   return function() {
-//     seed |= 0; seed = seed + 0x6D2B79F5 | 0;
-//     let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
-//     t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-//     return ((t ^ t >>> 14) >>> 0) / 4294967296;
-//   };
-// }
- 
 // ─── Moon ────────────────────────────────────────────────────────────────
 const moon_radius = 10;
 const moon = createMoon(renderer, moon_radius);
@@ -54,21 +46,7 @@ scene.add(new THREE.Mesh(atmGeo, atmMat));
 
 // ─── Lighting ─────────────────────────────────────────────────────────────────
 // Ambient (deep space faint light)
-scene.add(new THREE.AmbientLight(0xffffff, 1));
- 
-// Main sunlight (directional)
-const sun = new THREE.DirectionalLight(0xfff5e8, 2.2);
-sun.position.set(5, 2, 3);
-sun.castShadow = true;
-sun.shadow.mapSize.width  = 2048;
-sun.shadow.mapSize.height = 2048;
-scene.add(sun);
- 
-// Subtle earthshine (blue-ish fill from opposite side)
-const earthshine = new THREE.DirectionalLight(0x4466aa, 0.12);
-earthshine.position.set(-4, -1, -2);
-scene.add(earthshine);
-
+setupLighting(scene);
  
 //  ─── Apollo Lunar Module ──────────────────────────────────────────────────────────
 const GLBLoader = new GLTFLoader();
@@ -121,78 +99,87 @@ const ctrl = new CameraControl(renderer, camera, W, H, moon_radius);
 
 document.getElementById('loading').classList.add('hidden');
 ctrl.updateCamera();
- 
-// ─── Feature Database (lat/lon in degrees, type: 'crater' | 'mare' | 'landing') ──
-const FEATURES = [
-  // Craters
-  { name: "Tycho",              lat: -43.3, lon:  -11.2, type: 'crater' },
-  { name: "Copernicus",         lat:   9.7, lon:  -20.1, type: 'crater' },
-  { name: "Plato",              lat:  51.6, lon:   -9.4, type: 'crater' },
-  { name: "Clavius",            lat: -58.4, lon:  -14.1, type: 'crater' },
-  { name: "Kepler",             lat:   8.1, lon:  -38.0, type: 'crater' },
-  { name: "Aristarchus",        lat:  23.7, lon:  -47.4, type: 'crater' },
-  { name: "Eratosthenes",       lat:  14.5, lon:  -11.3, type: 'crater' },
-  { name: "Grimaldi",           lat:  -5.5, lon:  -68.3, type: 'crater' },
-  { name: "Schickard",          lat: -44.4, lon:  -54.6, type: 'crater' },
-  { name: "Ptolemaeus",         lat:  -9.2, lon:   -1.8, type: 'crater' },
-  { name: "Alphonsus",          lat: -13.4, lon:   -2.8, type: 'crater' },
-  { name: "Arzachel",           lat: -18.2, lon:   -1.9, type: 'crater' },
-  { name: "Theophilus",         lat: -11.4, lon:   26.4, type: 'crater' },
-  { name: "Langrenus",          lat:  -8.9, lon:   61.1, type: 'crater' },
-  { name: "Tycho",              lat: -43.3, lon:  -11.2, type: 'crater' },
-  { name: "Stevinus",           lat: -32.5, lon:   54.2, type: 'crater' },
-  { name: "Petavius",           lat: -25.1, lon:   60.4, type: 'crater' },
-  { name: "Furnerius",          lat: -36.0, lon:   60.4, type: 'crater' },
-  { name: "Fracastorius",       lat: -21.2, lon:   33.0, type: 'crater' },
-  { name: "Maurolycus",         lat: -41.8, lon:   14.0, type: 'crater' },
-  { name: "Walter",             lat: -33.1, lon:   -1.0, type: 'crater' },
-  { name: "Maginus",            lat: -50.5, lon:   -6.3, type: 'crater' },
-  { name: "Longomontanus",      lat: -49.6, lon:  -21.8, type: 'crater' },
-  { name: "Wilhelm",            lat: -43.4, lon:  -20.4, type: 'crater' },
-  { name: "Pitatus",            lat: -29.9, lon:  -13.5, type: 'crater' },
-  { name: "Bullialdus",         lat: -20.7, lon:  -22.2, type: 'crater' },
-  { name: "Gassendi",           lat: -17.5, lon:  -40.1, type: 'crater' },
-  { name: "Hansteen",           lat: -11.5, lon:  -52.0, type: 'crater' },
-  { name: "Hevelius",           lat:   2.2, lon:  -67.6, type: 'crater' },
-  { name: "Reiner",             lat:   7.0, lon:  -54.9, type: 'crater' },
-  { name: "Marius",             lat:  11.9, lon:  -50.8, type: 'crater' },
-  { name: "Pytheas",            lat:  20.5, lon:  -20.6, type: 'crater' },
-  { name: "Archimedes",         lat:  29.7, lon:   -4.0, type: 'crater' },
-  { name: "Timocharis",         lat:  26.7, lon:  -13.1, type: 'crater' },
-  { name: "Lambert",            lat:  25.8, lon:  -21.0, type: 'crater' },
-  { name: "Euler",              lat:  23.3, lon:  -29.2, type: 'crater' },
-  { name: "Aristillus",         lat:  33.9, lon:   1.2,  type: 'crater' },
-  { name: "Autolycus",          lat:  30.7, lon:    1.5, type: 'crater' },
-  { name: "Cassini",            lat:  40.2, lon:    4.6, type: 'crater' },
-  { name: "Eudoxus",            lat:  44.3, lon:   16.2, type: 'crater' },
-  { name: "Aristoteles",        lat:  50.2, lon:   17.4, type: 'crater' },
-  { name: "Endymion",           lat:  53.9, lon:   56.5, type: 'crater' },
-  { name: "Atlas",              lat:  46.7, lon:   44.4, type: 'crater' },
-  { name: "Hercules",           lat:  46.7, lon:   39.1, type: 'crater' },
-  { name: "Posidonius",         lat:  31.8, lon:   29.9, type: 'crater' },
-  { name: "Cleomedes",          lat:  27.7, lon:   55.5, type: 'crater' },
-  // Maria (seas)
-  { name: "Mare Imbrium",       lat:  32.8, lon:  -15.6, type: 'mare' },
-  { name: "Mare Tranquillitatis", lat: 8.5, lon:   31.4, type: 'mare' },
-  { name: "Mare Serenitatis",   lat:  28.0, lon:   17.5, type: 'mare' },
-  { name: "Oceanus Procellarum",lat:  18.4, lon:  -57.4, type: 'mare' },
-  { name: "Mare Crisium",       lat:  17.0, lon:   59.1, type: 'mare' },
-  { name: "Mare Nubium",        lat: -21.3, lon:  -16.6, type: 'mare' },
-  { name: "Mare Humorum",       lat: -24.4, lon:  -38.6, type: 'mare' },
-  { name: "Mare Fecunditatis",  lat:  -7.8, lon:   51.3, type: 'mare' },
-  { name: "Mare Vaporum",       lat:  13.3, lon:    3.6, type: 'mare' },
-  { name: "Mare Frigoris",      lat:  56.0, lon:    1.4, type: 'mare' },
-  { name: "Mare Marginis",      lat:  13.3, lon:   86.1, type: 'mare' },
-  { name: "Mare Anguis",        lat:  22.6, lon:   67.7, type: 'mare' },
-  { name: "Mare Orientale",     lat: -20.0, lon:  -95.0, type: 'mare' },
-  // Apollo Landing Sites
-  { name: "Apollo 11",          lat:   0.67, lon:  23.47, type: 'landing' },
-  { name: "Apollo 12",          lat:  -3.01, lon: -23.42, type: 'landing' },
-  { name: "Apollo 14",          lat:  -3.64, lon: -17.47, type: 'landing' },
-  { name: "Apollo 15",          lat:  26.13, lon:   3.63, type: 'landing' },
-  { name: "Apollo 16",          lat:  -8.97, lon:  15.50, type: 'landing' },
-  { name: "Apollo 17",          lat:  20.19, lon:  30.77, type: 'landing' },
-];
+
+// ─── Right-Click Landing System ───────────────────────────────────────────
+const landingPopup = document.getElementById('landing-popup');
+const landingCoords = document.getElementById('landing-popup-coords');
+const landingBtnConfirm = document.getElementById('landing-btn-confirm');
+const landingBtnCancel = document.getElementById('landing-btn-cancel');
+
+let pendingLanding = null;
+
+function screenToMoonCoords(screenX, screenY) {
+  // Normalize to NDC (-1 to 1)
+  const x = (screenX / W()) * 2 - 1;
+  const y = -(screenY / H()) * 2 + 1;
+  
+  // Create ray from camera through the screen point
+  const raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+  
+  // Intersect with moon sphere
+  const moonSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), moon_radius);
+  const intersection = new THREE.Vector3();
+  raycaster.ray.intersectSphere(moonSphere, intersection);
+  
+  if (!intersection) return null;
+  
+  // Convert 3D world position to lat/lon
+  const lat = Math.asin(intersection.y / moon_radius);
+  const lon = Math.atan2(intersection.x, intersection.z);
+  
+  return { lat, lon, x: intersection.x, y: intersection.y, z: intersection.z };
+}
+
+function showLandingPopup(screenX, screenY, coords) {
+  const latDeg = (coords.lat * 180 / Math.PI).toFixed(2);
+  const lonDeg = (coords.lon * 180 / Math.PI).toFixed(2);
+  const ns = latDeg >= 0 ? 'N' : 'S';
+  const ew = lonDeg >= 0 ? 'E' : 'W';
+  
+  landingCoords.innerHTML = `
+    LAT: ${ns}${Math.abs(latDeg)}°<br>
+    LON: ${ew}${Math.abs(lonDeg)}°
+  `;
+  
+  landingPopup.classList.add('visible');
+  landingPopup.style.left = screenX + 'px';
+  landingPopup.style.top = screenY + 'px';
+  
+  pendingLanding = { lat: coords.lat, lon: coords.lon };
+}
+
+function hideLandingPopup() {
+  landingPopup.classList.remove('visible');
+  pendingLanding = null;
+}
+
+function confirmLanding() {
+  if (!pendingLanding) return;
+  
+  ctrl.walker.lat = pendingLanding.lat;
+  ctrl.walker.lon = pendingLanding.lon;
+  ctrl.walker.targetAltitude = Math.max(2.5, Math.min(8, ctrl.walker.altitude));
+  
+  hideLandingPopup();
+}
+
+container.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  
+  const coords = screenToMoonCoords(e.clientX, e.clientY);
+  if (coords) {
+    showLandingPopup(e.clientX, e.clientY, coords);
+  }
+});
+
+landingBtnConfirm.addEventListener('click', confirmLanding);
+landingBtnCancel.addEventListener('click', hideLandingPopup);
+
+// Close popup on ESC
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') hideLandingPopup();
+});
 
 // ─── 3D Label Overlay ─────────────────────────────────────────────────────────
 const labelContainer = document.getElementById('label-container');
