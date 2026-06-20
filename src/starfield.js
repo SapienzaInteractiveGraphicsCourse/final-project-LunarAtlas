@@ -153,8 +153,6 @@ function addEarthAndSun(scene) {
   const sunGeo = new THREE.SphereGeometry(20, 32, 32);
   const sunMat = new THREE.MeshBasicMaterial({
     color: 0xfdb813,
-    emissive: 0xfdb813,
-    emissiveIntensity: 1.0,
   });
   const sun = new THREE.Mesh(sunGeo, sunMat);
   sun.position.set(sun_x, sun_y, sun_z);

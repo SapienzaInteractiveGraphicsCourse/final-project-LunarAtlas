@@ -4,8 +4,12 @@ import { createMoon } from './create_moon.js';
 import { createMoonAtmoshpere } from './moon_atmosphere.js';
 import { CameraControl } from './camera_controls.js';
 import { setupLighting } from './lighting.js';
+import { Spacecraft} from './spacecraft.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { FEATURES } from './features_database.js';
+
+// CONSTANTS
+const moon_radius = 10;
 
 // ─── Scene Setup ─────────────────────────────────────────────────────────────
 const container = document.getElementById('canvas-container');
@@ -25,7 +29,7 @@ const camera = new THREE.PerspectiveCamera(45, W() / H(), 0.1, 1000);
 camera.position.set(0, 0, 3.5);
 
 // ─── Secondary Camera (Apollo Follower) ───────────────────────────────────────
-const apolloCamera = new THREE.PerspectiveCamera(60, W() / H(), 0.1, 1000);
+const spacecraft_camera = new THREE.PerspectiveCamera(60, W() / H(), 0.1, 1000);
 let activeCamera = camera;
 let cameraMode = 'walker'; // 'walker' or 'apollo'
  
@@ -33,7 +37,6 @@ let cameraMode = 'walker'; // 'walker' or 'apollo'
 buildStars(scene);
 
 // ─── Moon ────────────────────────────────────────────────────────────────
-const moon_radius = 10;
 const moon = createMoon(renderer, moon_radius);
 scene.add(moon);
 
@@ -45,68 +48,15 @@ scene.add(createMoonAtmoshpere(moon_radius))
 // Ambient (deep space faint light)
 setupLighting(scene);
  
-//  ─── Apollo Lunar Module ──────────────────────────────────────────────────────────
-const GLBLoader = new GLTFLoader();
-let lm = null;
+// ─── Orbiting Spacecraft ──────────────────────────────────────────────────────────
+const spacecraft = new Spacecraft('./src/assets/apollo_lunar_module.glb', moon_radius +1);
+await spacecraft.loadPromise;
+//spacecraft.setPositionFromVector(camera.position);
+spacecraft.model.add(spacecraft_camera);
+scene.add(spacecraft.model);
 
-GLBLoader.load(
-  './src/assets/apollo_lunar_module.glb',
-  (gltf) => {
-    lm = gltf.scene;
-    lm.position.copy(camera.position);
-    lm.scale.set(0.05, 0.05, 0.05);
-    lm.rotateZ(-Math.PI / 2);
-    scene.add(lm);
-  },
-  (xhr) => {
-    console.log((xhr.loaded / xhr.total) * 100 + '% loaded');
-  },
-  (error) => {
-    console.error('Error loading GLB:', error);
-  }
-);
-
-// Orbit Animation
-let orbit_lon = 0;          // radians
-let orbit_lat = 0;          // radians (optional)
-const orbit_radius = moon_radius + 1.5; // distance from moon surface
-const orbit_speed = 0.005; // tweak for speed
-
-function OrbitingAnimation(){
-  if (!lm) return;
-  orbit_lon += orbit_speed;
-
-  // Optional: add slight inclination
-  //orbit_lat = Math.sin(orbit_lon * 0.3) * 0.1;
-
-  const x = orbit_radius * Math.cos(orbit_lat) * Math.cos(orbit_lon);
-  const y = orbit_radius * Math.sin(orbit_lat);
-  const z = orbit_radius * Math.cos(orbit_lat) * Math.sin(orbit_lon);
-
-  lm.position.set(x, y, z);
-  
-  // face the moon the right way
-  lm.lookAt(0, 0, 0);
-  lm.rotateZ(Math.PI / 2);
-
-  // Update Apollo camera to follow the lander
-  updateApolloCamera();
-}
-
-function updateApolloCamera() {
-  if (!lm) return;
-  
-  // Position camera slightly behind and above the lander, looking at the moon
-  const lmPos = lm.position.clone();
-  const lmToMoon = new THREE.Vector3(0, 0, 0).sub(lmPos).normalize();
-  
-  // Place camera offset from the lander (behind and slightly offset)
-  const cameraOffset = new THREE.Vector3().copy(lmPos).normalize().multiplyScalar(1.2);
-  const cameraPos = lmPos.clone().add(cameraOffset);
-  
-  apolloCamera.position.copy(cameraPos);
-  apolloCamera.lookAt(0, 0, 0);
-}
+spacecraft_camera.position.set(10, 10, -10);
+spacecraft_camera.lookAt(spacecraft.model.position);
 
 // ─── Camera Controls (manual implementation) ──────────────────────────────────
 
@@ -114,8 +64,8 @@ const ctrl = new CameraControl(renderer, camera, W, H, moon_radius);
 
 // Handle Apollo camera resizing
 window.addEventListener('resize', () => {
-  apolloCamera.aspect = W() / H();
-  apolloCamera.updateProjectionMatrix();
+  spacecraft_camera.aspect = W() / H();
+  spacecraft_camera.updateProjectionMatrix();
 });
 
 document.getElementById('loading').classList.add('hidden');
@@ -127,7 +77,7 @@ window.addEventListener('keydown', (e) => {
   // Camera switching with 'C' key
   if (e.key.toLowerCase() === 'c') {
     cameraMode = cameraMode === 'walker' ? 'apollo' : 'walker';
-    activeCamera = cameraMode === 'walker' ? camera : apolloCamera;
+    activeCamera = cameraMode === 'walker' ? camera : spacecraft_camera;
     activeCamera.aspect = W() / H();
     activeCamera.updateProjectionMatrix();
     console.log('Switched to', cameraMode, 'camera');
@@ -233,8 +183,8 @@ function animate(){
   ctrl.processWalk();
   ctrl.updateCamera();
   
-  //Orbiting Animation
-  OrbitingAnimation();
+  //Spacecraft Orbit
+  spacecraft.updateOrbitAnimation();
 
   renderer.render(scene, activeCamera);
 

@@ -71,7 +71,6 @@ export class CameraControl {
   }
 
   updateCamera() {
-
     // Smooth zoom (lerp)
     this.walker.altitude = THREE.MathUtils.lerp(
       this.walker.altitude,
