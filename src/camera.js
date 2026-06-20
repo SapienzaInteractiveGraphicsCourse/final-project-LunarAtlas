@@ -1,44 +1,48 @@
 // controls.js
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-export class CameraControl {
-  constructor(renderer, camera, W, H, moon_radius) {
+export class Camera {
+  constructor(renderer, W, H, subject, distance) {
     this.renderer = renderer;
-    this.camera = camera;
+    this.subject = subject;
     this.W = W;
     this.H = H;
-    this.moon_radius = moon_radius;
+
+    this.cam = new THREE.PerspectiveCamera(45, this.W() / this.H(), 0.1, 1000);
 
     this.navigator = {
       lon: 0,
       lat: 0,
-      altitude: 10,
-      targetAltitude: 10,
+      distance: distance,
+      target_distance: distance,
       speed: 0.003,
       keys: {}
     };
 
-    this.NAVIGATOR_MIN_ALTITUDE = 2;
+    // this.controls = new OrbitControls(this.cam, renderer.domElement);
+    // this.controls.target.copy(this.subject.position);
+    // this.controls.enableDamping = true;
+    // this.controls.dampingFactor = 0.08;
+    // this.controls.rotateSpeed = 0.6;
+    // this.controls.zoomSpeed = 0.8;
+    // this.controls.panSpeed = 0.5;
+    // this.controls.enablePan = false; // dragging should orbit, not pan
+
+    this.NAVIGATOR_MIN_ALTITUDE = 20;
     this.NAVIGATOR_MAX_ALTITUDE = 50;
-
-    this.canvas = renderer.domElement;
-    this.mouseLook = false;
-    this.lastMX = 0;
-    this.lastMY = 0;
-
-    this._up = new THREE.Vector3();
-    this._camPos = new THREE.Vector3();
-    this._lookTarget = new THREE.Vector3();
 
     this.onWheel = this.onWheel.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onKeyUp = this.onKeyUp.bind(this);
     this.onResize = this.onResize.bind(this);
 
-    this.canvas.addEventListener('wheel', this.onWheel, { passive: false });
+    window.addEventListener('wheel', this.onWheel, { passive: false });
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
     window.addEventListener('resize', this.onResize);
+
+    this.updateCamera();
   }
 
   onWheel(e) {
@@ -46,9 +50,9 @@ export class CameraControl {
 
     const zoomDelta = e.deltaY * 0.02;
 
-    this.navigator.targetAltitude = Math.max(
+    this.navigator.target_distance = Math.max(
       this.NAVIGATOR_MIN_ALTITUDE,
-      Math.min(this.NAVIGATOR_MAX_ALTITUDE, this.navigator.targetAltitude + zoomDelta)
+      Math.min(this.NAVIGATOR_MAX_ALTITUDE, this.navigator.target_distance + zoomDelta)
     );
   }
 
@@ -61,8 +65,8 @@ export class CameraControl {
   }
 
   onResize(apolloCamera) {
-    this.camera.aspect = this.W() / this.H();
-    this.camera.updateProjectionMatrix();
+    this.cam.aspect = this.W() / this.H();
+    this.cam.updateProjectionMatrix();
     if (apolloCamera) {
       apolloCamera.aspect = this.W() / this.H();
       apolloCamera.updateProjectionMatrix();
@@ -72,23 +76,20 @@ export class CameraControl {
 
   updateCamera() {
     // Smooth zoom (lerp)
-    this.navigator.altitude = THREE.MathUtils.lerp(
-      this.navigator.altitude,
-      this.navigator.targetAltitude,
+    this.navigator.distance = THREE.MathUtils.lerp(
+      this.navigator.distance,
+      this.navigator.target_distance,
       0.05 // smoothing factor
     );
 
     //Change camera position
-    this._up.set(
+    this.cam.position.set(
       Math.cos(this.navigator.lat) * Math.sin(this.navigator.lon),
       Math.sin(this.navigator.lat),
       Math.cos(this.navigator.lat) * Math.cos(this.navigator.lon)
-    ).normalize();
+    ).normalize().multiplyScalar(this.navigator.distance);
 
-    this._camPos.copy(this._up).multiplyScalar(this.moon_radius + this.navigator.altitude);
-    this.camera.position.copy(this._camPos);
-    this._lookTarget.copy(this._camPos).multiplyScalar(-1);
-    this.camera.lookAt(this._lookTarget);
+    this.cam.lookAt(this.subject.position);
   }
 
   processWalk() {

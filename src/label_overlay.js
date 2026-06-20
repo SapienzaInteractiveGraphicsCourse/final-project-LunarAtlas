@@ -32,13 +32,13 @@ export function createLabelOverlay(moon_radius) {
     return { ...f, worldPos, el };
   });
 
-  function update(activeCamera, ctrl) {
+  function update(activeCamera, camera) {
     const camDir = new THREE.Vector3();
     activeCamera.getWorldDirection(camDir);
     const w = window.innerWidth;
     const h = window.innerHeight;
 
-    const alt = ctrl.navigator.altitude;
+    const alt = camera.navigator.distance;
     const scaleFactor = Math.max(0.6, Math.min(1.2, 20 / alt));
 
     for (const f of featureData) {
