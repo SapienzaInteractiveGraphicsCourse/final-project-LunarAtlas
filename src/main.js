@@ -7,6 +7,7 @@ import { setupLighting } from './lighting.js';
 import { Spacecraft} from './spacecraft.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { FEATURES } from './features_database.js';
+import { createLabelOverlay } from './label_overlay.js';
 
 // CONSTANTS
 const moon_radius = 10;
@@ -85,91 +86,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 // ─── 3D Label Overlay ─────────────────────────────────────────────────────────
-const labelContainer = document.getElementById('label-container');
-const _labelVec = new THREE.Vector3();
-
-// Pre-compute 3D positions for each feature (on moon surface, accounting for moon.rotation.y)
-const featureData = FEATURES.map(f => {
-  const latR = f.lat * Math.PI / 180;
-  const lonR = f.lon * Math.PI / 180;
-  
-  const worldPos = new THREE.Vector3(
-    moon_radius * Math.cos(latR) * Math.sin(lonR),
-    moon_radius * Math.sin(latR),
-    moon_radius * Math.cos(latR) * Math.cos(lonR)
-  );
-  const el = document.createElement('div');
-  el.className = `moon-label moon-label--${f.type}`;
-  el.innerHTML = `<span class="moon-label__dot"></span><span class="moon-label__text">${f.name}</span>`;
-  labelContainer.appendChild(el);
-  return { ...f, worldPos, el };
-});
-
-function updateLabels() {
-  const camDir = new THREE.Vector3();
-  activeCamera.getWorldDirection(camDir);
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-
-  // Altitude-based scale: full size at zoom ~12, fade at far zoom
-  const alt = ctrl.walker.altitude;
-  const scaleFactor = Math.max(0.6, Math.min(1.2, 20 / alt));
-
-  for (const f of featureData) {
-    // Surface normal at feature = normalized world position
-    const normal = f.worldPos.clone().normalize();
-    // Dot with camera direction: if < 0 the feature faces toward camera
-    const dot = normal.dot(camDir);
-
-    // Hide if on far side (dot > 0 means normal faces away from camera view)
-    // Add a small margin (~0.1) to hide features near the limb
-    if (dot > -0.08) {
-      f.el.style.display = 'none';
-      continue;
-    }
-
-    // Project to screen space
-    _labelVec.copy(f.worldPos);
-    _labelVec.project(activeCamera);
-
-    const sx = ( _labelVec.x * 0.5 + 0.5) * w;
-    const sy = (-_labelVec.y * 0.5 + 0.5) * h;
-
-    // Hide if outside screen
-    if (sx < 0 || sx > w || sy < 0 || sy > h) {
-      f.el.style.display = 'none';
-      continue;
-    }
-
-    // Fade features near the limb (dot between -0.08 and -0.25)
-    const opacity = Math.min(1, (Math.abs(dot) - 0.08) / 0.17);
-
-    f.el.style.display = 'flex';
-    f.el.style.transform = `translate(${sx}px, ${sy}px) scale(${scaleFactor})`;
-    f.el.style.opacity = opacity.toFixed(3);
-  }
-}
-
-// Great-circle angular distance between two lat/lon points (degrees→rad internally)
-function angularDist(lat1, lon1, lat2, lon2) {
-  const toR = Math.PI / 180;
-  const la1 = lat1 * toR, lo1 = lon1 * toR, la2 = lat2 * toR, lo2 = lon2 * toR;
-  const dLat = la2 - la1, dLon = lo2 - lo1;
-  const a = Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;
-  return 2 * Math.asin(Math.sqrt(a));
-}
-
-function getNearestCrater(lat, lon) {
-  // lat/lon here are in radians from the walker
-  const latD = lat * 180 / Math.PI;
-  const lonD = lon * 180 / Math.PI;
-  let best = null, bestDist = Infinity;
-  for (const f of FEATURES) {
-    const d = angularDist(latD, lonD, f.lat, f.lon);
-    if (d < bestDist) { bestDist = d; best = f; }
-  }
-  return bestDist < 15 ? best : null;
-}
+const labelOverlay = createLabelOverlay(moon_radius);
 
 //─── Animations ───────────────────────────────────────────────────────────────
 
@@ -196,7 +113,7 @@ function animate(){
   latLabel.textContent = `Lat: ${ns}${Math.abs(latDeg)}°`;
   lonLabel.textContent = `Lon: ${ew}${Math.abs(lonDeg)}°`;
 
-  const crater = getNearestCrater(ctrl.walker.lat, ctrl.walker.lon);
+  const crater = labelOverlay.getNearestCrater(ctrl.walker.lat, ctrl.walker.lon);
   craterLabel.textContent  = crater ? crater.name : '—';
   craterLabel.style.opacity = crater ? '1' : '0.3';
 
@@ -204,7 +121,7 @@ function animate(){
   cameraModeLabel.textContent = `CAMERA: ${cameraMode.toUpperCase()}`;
 
   // Update 3D labels on screen
-  updateLabels();
+  labelOverlay.update(activeCamera, ctrl);
 }
 
 animate();
