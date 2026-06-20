@@ -32,8 +32,8 @@ camera.position.set(0, 0, 3.5);
 // ─── Secondary Camera (Apollo Follower) ───────────────────────────────────────
 const spacecraft_camera = new THREE.PerspectiveCamera(60, W() / H(), 0.1, 1000);
 let activeCamera = camera;
-let cameraMode = 'walker'; // 'walker' or 'apollo'
- 
+let cameraMode = 'navigator'; 
+
 // ─── Starfield ────────────────────────────────────────────────────────────────
 buildStars(scene);
 
@@ -52,7 +52,6 @@ setupLighting(scene);
 // ─── Orbiting Spacecraft ──────────────────────────────────────────────────────────
 const spacecraft = new Spacecraft('./src/assets/apollo_lunar_module.glb', moon_radius +1);
 await spacecraft.loadPromise;
-//spacecraft.setPositionFromVector(camera.position);
 spacecraft.model.add(spacecraft_camera);
 scene.add(spacecraft.model);
 
@@ -77,8 +76,8 @@ window.addEventListener('keydown', (e) => {
   
   // Camera switching with 'C' key
   if (e.key.toLowerCase() === 'c') {
-    cameraMode = cameraMode === 'walker' ? 'apollo' : 'walker';
-    activeCamera = cameraMode === 'walker' ? camera : spacecraft_camera;
+    cameraMode = cameraMode === 'navigator' ? 'apollo' : 'navigator';
+    activeCamera = cameraMode === 'navigator' ? camera : spacecraft_camera;
     activeCamera.aspect = W() / H();
     activeCamera.updateProjectionMatrix();
     console.log('Switched to', cameraMode, 'camera');
@@ -106,14 +105,14 @@ function animate(){
   renderer.render(scene, activeCamera);
 
   // Update location HUD
-  const latDeg = (ctrl.walker.lat * 180 / Math.PI).toFixed(2);
-  const lonDeg = (ctrl.walker.lon * 180 / Math.PI).toFixed(2);
+  const latDeg = (ctrl.navigator.lat * 180 / Math.PI).toFixed(2);
+  const lonDeg = (ctrl.navigator.lon * 180 / Math.PI).toFixed(2);
   const ns = latDeg >= 0 ? '' : '-';
   const ew = lonDeg >= 0 ? '' : '-';
   latLabel.textContent = `Lat: ${ns}${Math.abs(latDeg)}°`;
   lonLabel.textContent = `Lon: ${ew}${Math.abs(lonDeg)}°`;
 
-  const crater = labelOverlay.getNearestCrater(ctrl.walker.lat, ctrl.walker.lon);
+  const crater = labelOverlay.getNearestCrater(ctrl.navigator.lat, ctrl.navigator.lon);
   craterLabel.textContent  = crater ? crater.name : '—';
   craterLabel.style.opacity = crater ? '1' : '0.3';
 

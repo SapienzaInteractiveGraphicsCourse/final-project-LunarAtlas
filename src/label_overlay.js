@@ -11,7 +11,7 @@ function angularDist(lat1, lon1, lat2, lon2) {
   return 2 * Math.asin(Math.sqrt(a));
 }
 
-export function createLabelOverlay(moonRadius) {
+export function createLabelOverlay(moon_radius) {
   const labelContainer = document.getElementById('label-container');
 
   const featureData = FEATURES.map(f => {
@@ -19,9 +19,9 @@ export function createLabelOverlay(moonRadius) {
     const lonR = f.lon * Math.PI / 180;
 
     const worldPos = new THREE.Vector3(
-      moonRadius * Math.cos(latR) * Math.sin(lonR),
-      moonRadius * Math.sin(latR),
-      moonRadius * Math.cos(latR) * Math.cos(lonR)
+      moon_radius * Math.cos(latR) * Math.sin(lonR),
+      moon_radius * Math.sin(latR),
+      moon_radius * Math.cos(latR) * Math.cos(lonR)
     );
 
     const el = document.createElement('div');
@@ -38,7 +38,7 @@ export function createLabelOverlay(moonRadius) {
     const w = window.innerWidth;
     const h = window.innerHeight;
 
-    const alt = ctrl.walker.altitude;
+    const alt = ctrl.navigator.altitude;
     const scaleFactor = Math.max(0.6, Math.min(1.2, 20 / alt));
 
     for (const f of featureData) {

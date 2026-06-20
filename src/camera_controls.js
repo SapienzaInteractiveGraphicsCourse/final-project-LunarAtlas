@@ -9,7 +9,7 @@ export class CameraControl {
     this.H = H;
     this.moon_radius = moon_radius;
 
-    this.walker = {
+    this.navigator = {
       lon: 0,
       lat: 0,
       altitude: 10,
@@ -18,8 +18,8 @@ export class CameraControl {
       keys: {}
     };
 
-    this.WALKER_MIN_ALTITUDE = 2;
-    this.WALKER_MAX_ALTITUDE = 50;
+    this.NAVIGATOR_MIN_ALTITUDE = 2;
+    this.NAVIGATOR_MAX_ALTITUDE = 50;
 
     this.canvas = renderer.domElement;
     this.mouseLook = false;
@@ -46,18 +46,18 @@ export class CameraControl {
 
     const zoomDelta = e.deltaY * 0.02;
 
-    this.walker.targetAltitude = Math.max(
-      this.WALKER_MIN_ALTITUDE,
-      Math.min(this.WALKER_MAX_ALTITUDE, this.walker.targetAltitude + zoomDelta)
+    this.navigator.targetAltitude = Math.max(
+      this.NAVIGATOR_MIN_ALTITUDE,
+      Math.min(this.NAVIGATOR_MAX_ALTITUDE, this.navigator.targetAltitude + zoomDelta)
     );
   }
 
   onKeyDown(e) {
-    this.walker.keys[e.code] = true;
+    this.navigator.keys[e.code] = true;
   }
 
   onKeyUp(e) {
-    this.walker.keys[e.code] = false;
+    this.navigator.keys[e.code] = false;
   }
 
   onResize(apolloCamera) {
@@ -72,27 +72,27 @@ export class CameraControl {
 
   updateCamera() {
     // Smooth zoom (lerp)
-    this.walker.altitude = THREE.MathUtils.lerp(
-      this.walker.altitude,
-      this.walker.targetAltitude,
+    this.navigator.altitude = THREE.MathUtils.lerp(
+      this.navigator.altitude,
+      this.navigator.targetAltitude,
       0.05 // smoothing factor
     );
 
     //Change camera position
     this._up.set(
-      Math.cos(this.walker.lat) * Math.sin(this.walker.lon),
-      Math.sin(this.walker.lat),
-      Math.cos(this.walker.lat) * Math.cos(this.walker.lon)
+      Math.cos(this.navigator.lat) * Math.sin(this.navigator.lon),
+      Math.sin(this.navigator.lat),
+      Math.cos(this.navigator.lat) * Math.cos(this.navigator.lon)
     ).normalize();
 
-    this._camPos.copy(this._up).multiplyScalar(this.moon_radius + this.walker.altitude);
+    this._camPos.copy(this._up).multiplyScalar(this.moon_radius + this.navigator.altitude);
     this.camera.position.copy(this._camPos);
     this._lookTarget.copy(this._camPos).multiplyScalar(-1);
     this.camera.lookAt(this._lookTarget);
   }
 
   processWalk() {
-    const k = this.walker.keys;
+    const k = this.navigator.keys;
     let fwd = 0;
     let strafe = 0;
     if (k['KeyW'] || k['ArrowUp']) fwd += 1;
@@ -101,16 +101,16 @@ export class CameraControl {
     if (k['KeyD'] || k['ArrowRight']) strafe += 1;
     if (fwd === 0 && strafe === 0) return;
 
-    const spd = this.walker.speed;
-    this.walker.lon += strafe * spd;
-    this.walker.lat += fwd * spd;
+    const spd = this.navigator.speed;
+    this.navigator.lon += strafe * spd;
+    this.navigator.lat += fwd * spd;
 
     // Clamp latitude to [-90°, 90°] in radians
     const HALF_PI = Math.PI / 2;
-    this.walker.lat = Math.max(-HALF_PI, Math.min(HALF_PI, this.walker.lat));
+    this.navigator.lat = Math.max(-HALF_PI, Math.min(HALF_PI, this.navigator.lat));
 
     // Wrap longitude to (-180°, 180°] in radians
     const PI = Math.PI;
-    this.walker.lon = ((this.walker.lon + PI) % (2 * PI) + (2 * PI)) % (2 * PI) - PI;
+    this.navigator.lon = ((this.navigator.lon + PI) % (2 * PI) + (2 * PI)) % (2 * PI) - PI;
   }
 }
