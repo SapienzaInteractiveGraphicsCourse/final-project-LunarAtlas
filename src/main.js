@@ -8,7 +8,7 @@ import { Spacecraft} from './spacecraft.js';
 import { FEATURES } from './features_database.js';
 import { createLabelOverlay } from './label_overlay.js';
 
-// CONSTANTS
+// CONSTANTS & VARS
 const moon_radius = 10;
 
 // ─── Scene Setup ─────────────────────────────────────────────────────────────
@@ -24,7 +24,6 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 container.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-
 
 // ─── Starfield ────────────────────────────────────────────────────────────────
 buildStars(scene);
@@ -49,24 +48,25 @@ scene.add(spacecraft.model);
 // ─── Cameras  ──────────────────────────────────────────────────────────────────
 
 // ─── Main Camera (Navigation) ─────────────────────────────────────────────────
-const camera = new Camera(renderer, W, H, moon, moon_radius +10);
-scene.add(camera.cam);
-//camera.position.set(0, 0, 3.5);
+const nav_camera = new Camera(renderer, W, H, moon, moon_radius+10, false);
+scene.add(nav_camera.cam);
+moon.add(nav_camera.cam);
+let active_camera = nav_camera;
+let active_camera_name = "navigator";
 
 // ─── Secondary Camera (Spacecraft Follower) ───────────────────────────────────────
-const spacecraft_camera = new THREE.PerspectiveCamera(60, W() / H(), 0.1, 1000);
-let activeCamera = camera.cam;
-let cameraMode = 'navigator'; 
+const sat_camera = new Camera(renderer, W, H, spacecraft.model, 5, true);
+scene.add(sat_camera.cam);
+spacecraft.model.add(sat_camera.cam);
 
-spacecraft.model.add(spacecraft_camera);
-spacecraft_camera.position.set(10, 10, -10);
-spacecraft_camera.lookAt(spacecraft.model.position);
+// spacecraft_camera.position.set(10, 10, -10);
+// spacecraft_camera.lookAt(spacecraft.model.position);
 
 // Handle Apollo camera resizing
-window.addEventListener('resize', () => {
-  spacecraft_camera.aspect = W() / H();
-  spacecraft_camera.updateProjectionMatrix();
-});
+// window.addEventListener('resize', () => {
+//   spacecraft_camera.aspect = W() / H();
+//   spacecraft_camera.updateProjectionMatrix();
+// });
 
 document.getElementById('loading').classList.add('hidden');
 
@@ -74,11 +74,11 @@ window.addEventListener('keydown', (e) => {
   
   // Camera switching with 'C' key
   if (e.key.toLowerCase() === 'c') {
-    cameraMode = cameraMode === 'navigator' ? 'apollo' : 'navigator';
-    activeCamera = cameraMode === 'navigator' ? camera.cam : spacecraft_camera;
-    activeCamera.aspect = W() / H();
-    activeCamera.updateProjectionMatrix();
-    console.log('Switched to', cameraMode, 'camera');
+    if(active_camera === nav_camera) active_camera = sat_camera;
+    else if(active_camera === sat_camera) active_camera = nav_camera;
+
+    active_camera_name = active_camera === nav_camera ? 'navigator' : 'spacecraft';
+    console.log('Switched to', active_camera_name, 'camera');
   }
 });
 
@@ -95,30 +95,30 @@ function animate(){
   requestAnimationFrame(animate);
 
   //currently active camera and navigation camera position update
-  renderer.render(scene, activeCamera);
-  camera.processWalk();
-  camera.updateCamera();
+  renderer.render(scene, active_camera.cam);
+
+  active_camera.camPosition();
   
   //Spacecraft Orbit
   spacecraft.updateOrbitAnimation();
 
   // Update location HUD
-  const latDeg = (camera.navigator.lat * 180 / Math.PI).toFixed(2);
-  const lonDeg = (camera.navigator.lon * 180 / Math.PI).toFixed(2);
+  const latDeg = (active_camera.navigator.lat * 180 / Math.PI).toFixed(2);
+  const lonDeg = (active_camera.navigator.lon * 180 / Math.PI).toFixed(2);
   const ns = latDeg >= 0 ? '' : '-';
   const ew = lonDeg >= 0 ? '' : '-';
   latLabel.textContent = `Lat: ${ns}${Math.abs(latDeg)}°`;
   lonLabel.textContent = `Lon: ${ew}${Math.abs(lonDeg)}°`;
 
-  const crater = labelOverlay.getNearestCrater(camera.navigator.lat, camera.navigator.lon);
+  const crater = labelOverlay.getNearestCrater(active_camera.navigator.lat, active_camera.navigator.lon);
   craterLabel.textContent  = crater ? crater.name : '—';
   craterLabel.style.opacity = crater ? '1' : '0.3';
 
   // Update camera mode display
-  cameraModeLabel.textContent = `CAMERA: ${cameraMode.toUpperCase()}`;
+  cameraModeLabel.textContent = `CAMERA: ${active_camera_name.toUpperCase()}`;
 
   // Update 3D labels on screen
-  labelOverlay.update(activeCamera, camera);
+  labelOverlay.update(active_camera.cam, active_camera);
 }
 
 animate();
