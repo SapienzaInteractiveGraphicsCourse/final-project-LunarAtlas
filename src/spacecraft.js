@@ -19,7 +19,6 @@ export class Spacecraft {
             const gltf = await this.loader.loadAsync(this.glbPath);
             this.model = gltf.scene;
             this.model.scale.set(0.005, 0.005, 0.005);
-            this.model.rotation.z = -Math.PI / 2;
             this.isLoaded = true;
             return this.model;
         } catch (err) {
@@ -62,7 +61,8 @@ export class Spacecraft {
 
         this.model.position.set(x, y, z);
         this.model.lookAt(0, 0, 0);
-        this.model.rotateZ(Math.PI / 2);
+        this.model.rotateY(-Math.PI/2);
+        this.model.rotateX(-Math.PI/6);
     }
 
     setOrbitParameters(radius, speed, lat = 0) {
