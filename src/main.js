@@ -49,24 +49,16 @@ scene.add(spacecraft.model);
 
 // ─── Main Camera (Navigation) ─────────────────────────────────────────────────
 const nav_camera = new Camera(renderer, W, H, moon, moon_radius+10, false);
-scene.add(nav_camera.cam);
 moon.add(nav_camera.cam);
+
 let active_camera = nav_camera;
 let active_camera_name = "navigator";
 
 // ─── Secondary Camera (Spacecraft Follower) ───────────────────────────────────────
-const sat_camera = new Camera(renderer, W, H, spacecraft.model, 5, true);
-scene.add(sat_camera.cam);
+const sat_camera = new Camera(renderer, W, H, spacecraft.model, 2, true);
+
 spacecraft.model.add(sat_camera.cam);
-
-// spacecraft_camera.position.set(10, 10, -10);
-// spacecraft_camera.lookAt(spacecraft.model.position);
-
-// Handle Apollo camera resizing
-// window.addEventListener('resize', () => {
-//   spacecraft_camera.aspect = W() / H();
-//   spacecraft_camera.updateProjectionMatrix();
-// });
+sat_camera.updatePosition();
 
 document.getElementById('loading').classList.add('hidden');
 
@@ -94,23 +86,25 @@ const cameraModeLabel = document.getElementById('camera-mode');
 function animate(){
   requestAnimationFrame(animate);
 
-  //currently active camera and navigation camera position update
-  renderer.render(scene, active_camera.cam);
-
-  active_camera.camPosition();
-  
   //Spacecraft Orbit
   spacecraft.updateOrbitAnimation();
 
+  // Keep the spacecraft-follower camera locked on the subject with the
+  // moon behind it, even as the spacecraft moves/rotates along its orbit.
+  active_camera.updatePosition();
+
+  //currently active camera and navigation camera position update
+  renderer.render(scene, active_camera.cam);
+
   // Update location HUD
-  const latDeg = (active_camera.navigator.lat * 180 / Math.PI).toFixed(2);
-  const lonDeg = (active_camera.navigator.lon * 180 / Math.PI).toFixed(2);
+  const latDeg = (active_camera.state.lat * 180 / Math.PI).toFixed(2);
+  const lonDeg = (active_camera.state.lon * 180 / Math.PI).toFixed(2);
   const ns = latDeg >= 0 ? '' : '-';
   const ew = lonDeg >= 0 ? '' : '-';
   latLabel.textContent = `Lat: ${ns}${Math.abs(latDeg)}°`;
   lonLabel.textContent = `Lon: ${ew}${Math.abs(lonDeg)}°`;
 
-  const crater = labelOverlay.getNearestCrater(active_camera.navigator.lat, active_camera.navigator.lon);
+  const crater = labelOverlay.getNearestCrater(active_camera.state.lat, active_camera.state.lon);
   craterLabel.textContent  = crater ? crater.name : '—';
   craterLabel.style.opacity = crater ? '1' : '0.3';
 

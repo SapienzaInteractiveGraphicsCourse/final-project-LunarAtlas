@@ -8,21 +8,22 @@ export class Camera {
     this.W = W;
     this.H = H;
     this.subject = subject;
+    this.distance = distance;
+    this.fixed = fixed;
 
     // Camera State
-    this.navigator = { lat: 0, lon: 0, distance };
+    this.state = { lat: 0, lon: 0, distance: distance };
 
     // Initialize Camera
     this.cam = new THREE.PerspectiveCamera(60, W() / H(), 0.1, 2000);
-    this.cam.position.set(
-      Math.cos(this.navigator.lat) * Math.sin(this.navigator.lon),
-      Math.sin(this.navigator.lat),
-      Math.cos(this.navigator.lat) * Math.cos(this.navigator.lon)
-    ).multiplyScalar(distance);
-    this.cam.lookAt(subject.position);
 
     // Camera Control
     if(!fixed){
+      const subjectWorldPos = new THREE.Vector3();
+      this.subject.getWorldPosition(subjectWorldPos);
+      this.cam.position.copy(subjectWorldPos.clone().add(new THREE.Vector3(0, 0, this.distance)));
+      this.cam.lookAt(subjectWorldPos);
+
       this.controls = new OrbitControls(this.cam, renderer.domElement);
       this.controls.target.copy(this.subject.position);
       this.controls.enableDamping = true;
@@ -30,12 +31,39 @@ export class Camera {
       this.controls.rotateSpeed = 0.4;
       this.controls.zoomSpeed = 0.8;
       this.controls.enablePan = false; // dragging should only orbit
-      this.controls.minDistance = 20;  // stay outside the moon's surface
+      this.controls.minDistance = 20;
       this.controls.maxDistance = 50;
     }
 
     this.onResize = this.onResize.bind(this);
     window.addEventListener('resize', this.onResize);
+  }
+
+  updatePosition() {
+    if (!this.fixed && this.controls) {
+      this.controls.update();
+      this.camPosition();
+      return;
+    }
+
+    const subjectWorldPos = new THREE.Vector3();
+    this.subject.getWorldPosition(subjectWorldPos);
+
+    // Direction from the moon's center (assumed at origin) out through the subject.
+    const outward = subjectWorldPos.clone();
+    if (outward.lengthSq() === 0) {
+      outward.set(0, 0, 1);
+    } else {
+      outward.normalize();
+    }
+    const camWorldPos = subjectWorldPos.clone().addScaledVector(outward, this.distance);
+
+    if (this.cam.parent) {
+      this.cam.parent.updateMatrixWorld(true);
+      this.cam.position.copy(this.cam.parent.worldToLocal(camWorldPos.clone()));
+    } 
+    
+    this.cam.lookAt(subjectWorldPos);
   }
 
   onResize() {
@@ -51,9 +79,9 @@ export class Camera {
     this.subject.getWorldPosition(subjectWorldPos);
 
     const offset = camWorldPos.sub(subjectWorldPos);
-    this.navigator.distance = offset.length();
+    this.state.distance = offset.length();
     const dir = offset.normalize();
-    this.navigator.lat = Math.asin(dir.y);
-    this.navigator.lon = Math.atan2(dir.x, dir.z);
+    this.state.lat = Math.asin(dir.y);
+    this.state.lon = Math.atan2(dir.x, dir.z);
   }
 }

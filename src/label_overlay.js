@@ -38,7 +38,7 @@ export function createLabelOverlay(moon_radius) {
     const w = window.innerWidth;
     const h = window.innerHeight;
 
-    const alt = camera.navigator.distance;
+    const alt = camera.state.distance;
     const scaleFactor = Math.max(0.6, Math.min(1.2, 20 / alt));
 
     for (const f of featureData) {
