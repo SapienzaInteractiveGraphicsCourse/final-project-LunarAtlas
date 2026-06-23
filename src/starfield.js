@@ -77,24 +77,10 @@ export function buildStars(scene) {
 }
 
 function addEarthAndSun(scene) {
-  // Moon radius from main.js is 10 units
-  // Real Earth-Moon distance: ~384,400 km
   // Real Moon radius: 1,737 km, Real Earth radius: 6,371 km
-  // Scale factor: 10 / 1,737 ≈ 0.00576 units/km
-  // Scaled Earth-Moon distance: 384,400 * 0.00576 ≈ 2,214 units
   
-  const moonRadius = 10;
   const earthMoonDistance = 240; // Scaled for visibility while maintaining realism
   const earthRadius = 6.371; // Scaled relative to moon (6,371/1,737 * 10)
-  
-  // Position Earth in the sky (at an angle from the moon)
-  // Earth appears in the lunar sky at roughly this position
-  const earthAngle = 0; // 54 degrees
-  const earthElevation = 0; // 36 degrees above equator
-  
-  const earth_x = earthMoonDistance * Math.cos(earthElevation) * Math.cos(earthAngle);
-  const earth_y = earthMoonDistance * Math.sin(earthElevation);
-  const earth_z = earthMoonDistance * Math.cos(earthElevation) * Math.sin(earthAngle);
   
   // Create Earth with texture
   const earthGeo = new THREE.SphereGeometry(earthRadius, 64, 64);
@@ -108,7 +94,7 @@ function addEarthAndSun(scene) {
   });
   
   const earth = new THREE.Mesh(earthGeo, earthMat);
-  earth.position.set(earth_x, earth_y, earth_z);
+  earth.position.set(0, 0, 0);
   earth.userData.isEarth = true;
   earth.userData.name = 'Earth';
   scene.add(earth);

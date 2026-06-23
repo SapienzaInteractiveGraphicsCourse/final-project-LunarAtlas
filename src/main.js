@@ -5,11 +5,12 @@ import { createMoonAtmoshpere } from './moon_atmosphere.js';
 import { Camera } from './camera.js';
 import { setupLighting } from './lighting.js';
 import { Spacecraft} from './spacecraft.js';
-import { FEATURES } from './features_database.js';
 import { createLabelOverlay } from './label_overlay.js';
 
 // CONSTANTS & VARS
 const moon_radius = 10;
+const earth_moon_distance = 240;
+const moon_orbit_speed = 0.00008;
 
 // ─── Scene Setup ─────────────────────────────────────────────────────────────
 const container = document.getElementById('canvas-container');
@@ -29,11 +30,16 @@ const scene = new THREE.Scene();
 buildStars(scene);
 
 // ─── Moon ─────────────────────────────────────────────────────────────────────
+const moonOrbitPivot = new THREE.Group();
+scene.add(moonOrbitPivot);
+
 const moon = createMoon(renderer, moon_radius);
-scene.add(moon);
+moon.position.set(earth_moon_distance, 0, 0);
+moonOrbitPivot.add(moon);
 
 // ─── Moon Atmosphere ───────────────────────────────────────────────────────────
-scene.add(createMoonAtmoshpere(moon_radius))
+const moonAtmosphere = createMoonAtmoshpere(moon_radius);
+moon.add(moonAtmosphere);
  
 // ─── Lighting ─────────────────────────────────────────────────────────────────
 // Ambient (deep space faint light)
@@ -42,14 +48,13 @@ setupLighting(scene);
 // ─── Orbiting Spacecraft ──────────────────────────────────────────────────────────
 const spacecraft = new Spacecraft('./src/assets/apollo_lunar_module.glb', moon_radius +1);
 await spacecraft.loadPromise;
-
-scene.add(spacecraft.model);
+moon.add(spacecraft.model);
 
 // ─── Cameras  ──────────────────────────────────────────────────────────────────
 
 // ─── Main Camera (Navigation) ─────────────────────────────────────────────────
-const nav_camera = new Camera(renderer, W, H, moon, moon_radius+10, false);
-moon.add(nav_camera.cam);
+const nav_camera = new Camera(renderer, W, H, moon, moon_radius + 6, false);
+scene.add(nav_camera.cam);
 
 let active_camera = nav_camera;
 let active_camera_name = "navigator";
@@ -75,7 +80,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 // ─── Labels ─────────────────────────────────────────────────────────
-const labelOverlay = createLabelOverlay(moon_radius); //3D Label Overlay
+const labelOverlay = createLabelOverlay(moon_radius, moon); //3D Label Overlay
 const craterLabel = document.getElementById('crater-label');
 const latLabel    = document.getElementById('lat');
 const lonLabel    = document.getElementById('lon');
@@ -85,6 +90,7 @@ const cameraModeLabel = document.getElementById('camera-mode');
 
 function animate(){
   requestAnimationFrame(animate);
+  moonOrbitPivot.rotation.y += moon_orbit_speed;
 
   //Spacecraft Orbit
   spacecraft.updateOrbitAnimation();

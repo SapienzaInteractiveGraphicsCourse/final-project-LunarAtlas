@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { FEATURES } from './features_database.js';
 
 const _labelVec = new THREE.Vector3();
+const _moonCenterVec = new THREE.Vector3();
+const _normalVec = new THREE.Vector3();
 
 function angularDist(lat1, lon1, lat2, lon2) {
   const toR = Math.PI / 180;
@@ -11,14 +13,14 @@ function angularDist(lat1, lon1, lat2, lon2) {
   return 2 * Math.asin(Math.sqrt(a));
 }
 
-export function createLabelOverlay(moon_radius) {
+export function createLabelOverlay(moon_radius, moonObject) {
   const labelContainer = document.getElementById('label-container');
 
   const featureData = FEATURES.map(f => {
     const latR = f.lat * Math.PI / 180;
     const lonR = f.lon * Math.PI / 180;
 
-    const worldPos = new THREE.Vector3(
+    const localPos = new THREE.Vector3(
       moon_radius * Math.cos(latR) * Math.sin(lonR),
       moon_radius * Math.sin(latR),
       moon_radius * Math.cos(latR) * Math.cos(lonR)
@@ -29,7 +31,7 @@ export function createLabelOverlay(moon_radius) {
     el.innerHTML = `<span class="moon-label__dot"></span><span class="moon-label__text">${f.name}</span>`;
     labelContainer.appendChild(el);
 
-    return { ...f, worldPos, el };
+    return { ...f, localPos, el };
   });
 
   function update(activeCamera, camera) {
@@ -40,17 +42,19 @@ export function createLabelOverlay(moon_radius) {
 
     const alt = camera.state.distance;
     const scaleFactor = Math.max(0.6, Math.min(1.2, 20 / alt));
+    moonObject.getWorldPosition(_moonCenterVec);
 
     for (const f of featureData) {
-      const normal = f.worldPos.clone().normalize();
-      const dot = normal.dot(camDir);
+      _labelVec.copy(f.localPos);
+      moonObject.localToWorld(_labelVec);
+      _normalVec.copy(_labelVec).sub(_moonCenterVec).normalize();
+      const dot = _normalVec.dot(camDir);
 
       if (dot > -0.08) {
         f.el.style.display = 'none';
         continue;
       }
 
-      _labelVec.copy(f.worldPos);
       _labelVec.project(activeCamera);
 
       const sx = (_labelVec.x * 0.5 + 0.5) * w;

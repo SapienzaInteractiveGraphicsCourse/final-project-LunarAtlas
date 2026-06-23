@@ -20,19 +20,28 @@ export class Camera {
     // Camera Control
     if(!fixed){
       const subjectWorldPos = new THREE.Vector3();
+      const subjectWorldQuat = new THREE.Quaternion();
       this.subject.getWorldPosition(subjectWorldPos);
+      this.subject.getWorldQuaternion(subjectWorldQuat);
       this.cam.position.copy(subjectWorldPos.clone().add(new THREE.Vector3(0, 0, this.distance)));
       this.cam.lookAt(subjectWorldPos);
+      this.prevSubjectWorldPos = subjectWorldPos.clone();
+      this.prevSubjectWorldQuat = subjectWorldQuat.clone();
+      this.subjectDelta = new THREE.Vector3();
+      this.rotationDelta = new THREE.Quaternion();
+      this.inversePrevSubjectQuat = new THREE.Quaternion();
+      this.cameraOffset = new THREE.Vector3();
+      this.targetOffset = new THREE.Vector3();
 
       this.controls = new OrbitControls(this.cam, renderer.domElement);
-      this.controls.target.copy(this.subject.position);
+      this.controls.target.copy(subjectWorldPos);
       this.controls.enableDamping = true;
       this.controls.dampingFactor = 0.8;
       this.controls.rotateSpeed = 0.4;
       this.controls.zoomSpeed = 0.8;
       this.controls.enablePan = false; // dragging should only orbit
-      this.controls.minDistance = 20;
-      this.controls.maxDistance = 50;
+      this.controls.minDistance = 12;
+      this.controls.maxDistance = 40;
     }
 
     this.onResize = this.onResize.bind(this);
@@ -41,6 +50,23 @@ export class Camera {
 
   updatePosition() {
     if (!this.fixed && this.controls) {
+      const subjectWorldPos = new THREE.Vector3();
+      const subjectWorldQuat = new THREE.Quaternion();
+      this.subject.getWorldPosition(subjectWorldPos);
+      this.subject.getWorldQuaternion(subjectWorldQuat);
+
+      this.subjectDelta.subVectors(subjectWorldPos, this.prevSubjectWorldPos);
+      this.inversePrevSubjectQuat.copy(this.prevSubjectWorldQuat).invert();
+      this.rotationDelta.copy(subjectWorldQuat).multiply(this.inversePrevSubjectQuat);
+
+      this.cameraOffset.copy(this.cam.position).sub(this.prevSubjectWorldPos).applyQuaternion(this.rotationDelta);
+      this.cam.position.copy(subjectWorldPos).add(this.cameraOffset);
+
+      this.targetOffset.copy(this.controls.target).sub(this.prevSubjectWorldPos).applyQuaternion(this.rotationDelta);
+      this.controls.target.copy(subjectWorldPos).add(this.targetOffset);
+
+      this.prevSubjectWorldPos.copy(subjectWorldPos);
+      this.prevSubjectWorldQuat.copy(subjectWorldQuat);
       this.controls.update();
       this.camPosition();
       return;
@@ -49,8 +75,16 @@ export class Camera {
     const subjectWorldPos = new THREE.Vector3();
     this.subject.getWorldPosition(subjectWorldPos);
 
-    // Direction from the moon's center (assumed at origin) out through the subject.
-    const outward = subjectWorldPos.clone();
+    // Direction from the parent body center (moon for spacecraft, world origin fallback)
+    // out through the subject.
+    const parentCenter = new THREE.Vector3();
+    if (this.subject.parent) {
+      this.subject.parent.getWorldPosition(parentCenter);
+    } else {
+      parentCenter.set(0, 0, 0);
+    }
+
+    const outward = subjectWorldPos.clone().sub(parentCenter);
     if (outward.lengthSq() === 0) {
       outward.set(0, 0, 1);
     } else {
