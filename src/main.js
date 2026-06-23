@@ -1,8 +1,9 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildStars } from './starfield.js';
-import { createMoon } from './create_moon.js';
+import { createMoon } from './moon.js';
 import { createMoonAtmoshpere } from './moon_atmosphere.js';
-import { Camera } from './camera.js';
+import { createNavigatorCamera, createFollowerCamera } from './cameras.js';
 import { setupLighting } from './lighting.js';
 import { Spacecraft} from './spacecraft.js';
 import { FEATURES } from './features_database.js';
@@ -48,17 +49,17 @@ scene.add(spacecraft.model);
 // ─── Cameras  ──────────────────────────────────────────────────────────────────
 
 // ─── Main Camera (Navigation) ─────────────────────────────────────────────────
-const nav_camera = new Camera(renderer, W, H, moon, moon_radius+10, false);
+const nav_camera = createNavigatorCamera(renderer, W, H, moon, moon_radius + 10);
 moon.add(nav_camera.cam);
 
 let active_camera = nav_camera;
 let active_camera_name = "navigator";
 
 // ─── Secondary Camera (Spacecraft Follower) ───────────────────────────────────────
-const sat_camera = new Camera(renderer, W, H, spacecraft.model, 2, true);
+const sat_camera = createFollowerCamera(renderer, W, H, spacecraft.model, 2);
 
 spacecraft.model.add(sat_camera.cam);
-sat_camera.updatePosition();
+sat_camera.update();
 
 document.getElementById('loading').classList.add('hidden');
 
@@ -91,7 +92,7 @@ function animate(){
 
   // Keep the spacecraft-follower camera locked on the subject with the
   // moon behind it, even as the spacecraft moves/rotates along its orbit.
-  active_camera.updatePosition();
+  active_camera.update();
 
   //currently active camera and navigation camera position update
   renderer.render(scene, active_camera.cam);
