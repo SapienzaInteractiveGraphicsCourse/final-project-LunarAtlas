@@ -41,7 +41,7 @@ scene.add(createMoonAtmoshpere(moon_radius))
 setupLighting(scene);
  
 // ─── Orbiting Spacecraft ──────────────────────────────────────────────────────────
-const spacecraft = new Spacecraft('./src/assets/apollo_lunar_module.glb', moon_radius +1);
+const spacecraft = new Spacecraft('./src/assets/gateway_core.glb', moon_radius +1);
 await spacecraft.loadPromise;
 
 scene.add(spacecraft.model);
@@ -56,7 +56,7 @@ let active_camera = nav_camera;
 let active_camera_name = "navigator";
 
 // ─── Secondary Camera (Spacecraft Follower) ───────────────────────────────────────
-const sat_camera = createFollowerCamera(renderer, W, H, spacecraft.model, 2);
+const sat_camera = createFollowerCamera(renderer, W, H, spacecraft.model, 0.3);
 
 spacecraft.model.add(sat_camera.cam);
 sat_camera.update();

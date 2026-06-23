@@ -18,7 +18,7 @@ export class Spacecraft {
         try {
             const gltf = await this.loader.loadAsync(this.glbPath);
             this.model = gltf.scene;
-            this.model.scale.set(0.05, 0.05, 0.05);
+            this.model.scale.set(0.005, 0.005, 0.005);
             this.model.rotation.z = -Math.PI / 2;
             this.isLoaded = true;
             return this.model;

@@ -31,7 +31,7 @@ export function createNavigatorCamera(renderer, W, H, subject, distance) {
   controls.rotateSpeed = 0.4;
   controls.zoomSpeed = 0.8;
   controls.enablePan = false; // dragging should only orbit
-  controls.minDistance = 20;
+  controls.minDistance = 12;
   controls.maxDistance = 50;
 
   const state = { lat: 0, lon: 0, distance };
@@ -78,6 +78,12 @@ export function createFollowerCamera(renderer, W, H, subject, distance) {
     }
 
     cam.lookAt(subjectWorldPos);
+
+    const dir = camWorldPos.sub(subjectWorldPos);
+    state.distance = dir.length();
+    dir.normalize();
+    state.lat = Math.asin(dir.y);
+    state.lon = Math.atan2(dir.x, dir.z);
   }
 
   watchResize(renderer, cam, W, H);
