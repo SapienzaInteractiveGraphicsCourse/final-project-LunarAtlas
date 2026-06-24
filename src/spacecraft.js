@@ -10,7 +10,7 @@ export class Spacecraft {
         this.orbitLon = 0;
         this.orbitLat = 0;
         this.orbitRadius = orbitRadius;
-        this.orbitSpeed = 0.001;
+        this.orbitSpeed = 0.0001;
         this.loadPromise = this.load();
     }
 
@@ -27,11 +27,11 @@ export class Spacecraft {
         }
     }
 
-    getModel() {
+    getModelPart(part_name) {
         if (!this.isLoaded) {
             throw new Error('Spacecraft model not loaded. Call load() first.');
         }
-        return this.model;
+        return this.model.getObjectByName(part_name);
     }
 
     setPosition(x, y, z) {
@@ -65,9 +65,14 @@ export class Spacecraft {
         this.model.rotateX(-Math.PI/6);
     }
 
+
     setOrbitParameters(radius, speed, lat = 0) {
         this.orbitRadius = radius;
         this.orbitSpeed = speed;
         this.orbitLat = lat;
     }
+}
+
+export function solarPanelsAnimation(spacecraft_solar_panels){
+    spacecraft_solar_panels.rotation.y += 0.01;
 }

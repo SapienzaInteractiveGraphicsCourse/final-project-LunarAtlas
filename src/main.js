@@ -5,9 +5,10 @@ import { createMoon } from './moon.js';
 import { createMoonAtmoshpere } from './moon_atmosphere.js';
 import { createNavigatorCamera, createFollowerCamera } from './cameras.js';
 import { setupLighting } from './lighting.js';
-import { Spacecraft} from './spacecraft.js';
+import { Spacecraft, solarPanelsAnimation } from './spacecraft.js';
 import { FEATURES } from './features_database.js';
 import { createLabelOverlay } from './label_overlay.js';
+import { space } from 'postcss/lib/list';
 
 // CONSTANTS & VARS
 const moon_radius = 10;
@@ -46,9 +47,11 @@ await spacecraft.loadPromise;
 
 scene.add(spacecraft.model);
 
-// ─── Cameras  ──────────────────────────────────────────────────────────────────
+const spacecraft_solar_panels = spacecraft.getModelPart("Maxar_PPE_Array");
 
-// ─── Main Camera (Navigation) ─────────────────────────────────────────────────
+// ─── Cameras  ────────────────────────────────────────────────────────────────────
+
+// ─── Main Camera (Navigation) ────────────────────────────────────────────────────
 const nav_camera = createNavigatorCamera(renderer, W, H, moon, moon_radius + 10);
 moon.add(nav_camera.cam);
 
@@ -56,7 +59,7 @@ let active_camera = nav_camera;
 let active_camera_name = "navigator";
 
 // ─── Secondary Camera (Spacecraft Follower) ───────────────────────────────────────
-const sat_camera = createFollowerCamera(renderer, W, H, spacecraft.model, 0.3);
+const sat_camera = createFollowerCamera(renderer, W, H, spacecraft.model, 0.2);
 
 spacecraft.model.add(sat_camera.cam);
 sat_camera.update();
@@ -75,7 +78,7 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-// ─── Labels ─────────────────────────────────────────────────────────
+// ─── Labels ──────────────────────────────────────────────────────────────────
 const labelOverlay = createLabelOverlay(moon_radius); //3D Label Overlay
 const craterLabel = document.getElementById('crater-label');
 const latLabel    = document.getElementById('lat');
@@ -89,6 +92,9 @@ function animate(){
 
   //Spacecraft Orbit
   spacecraft.updateOrbitAnimation();
+
+  //Spacecraft Animation
+  solarPanelsAnimation(spacecraft_solar_panels);
 
   // Keep the spacecraft-follower camera locked on the subject with the
   // moon behind it, even as the spacecraft moves/rotates along its orbit.
