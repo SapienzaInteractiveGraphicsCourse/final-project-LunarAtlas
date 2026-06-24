@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { buildStars } from './starfield.js';
 import { createMoon } from './moon.js';
 import { createMoonAtmoshpere } from './moon_atmosphere.js';
-import { positionCamera, updateLatLon, createSatelliteCamera } from './cameras.js';
+import { positionCamera, updateLatLon } from './cameras.js';
 import { setupLighting } from './lighting.js';
 import { Spacecraft, solarPanelsAnimation } from './spacecraft.js';
 import { createLabelOverlay } from './label_overlay.js';
@@ -10,6 +10,65 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // CONSTANTS & VARS
 const moon_radius = 10;
+const _subjectWorldPos = new THREE.Vector3();
+const _previousTarget = new THREE.Vector3();
+const _targetDelta = new THREE.Vector3();
+const _offset = new THREE.Vector3();
+const _outward = new THREE.Vector3();
+const _perp = new THREE.Vector3();
+
+function configureOrbitControls(controls, minDistance, maxDistance) {
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.8;
+  controls.rotateSpeed = 0.4;
+  controls.zoomSpeed = 0.8;
+  controls.enablePan = false; // dragging should only orbit
+  controls.minDistance = minDistance;
+  controls.maxDistance = maxDistance;
+}
+
+function getOutwardOffset(subject, distance) {
+  subject.getWorldPosition(_subjectWorldPos);
+  return _subjectWorldPos.lengthSq() === 0
+    ? new THREE.Vector3(0, 0, distance)
+    : _subjectWorldPos.clone().normalize().multiplyScalar(distance);
+}
+
+function updateTrackingOrbitCamera(camera, controls, subject, minDistance, minOutwardOffset) {
+  _previousTarget.copy(controls.target);
+  subject.getWorldPosition(_subjectWorldPos);
+
+  _targetDelta.subVectors(_subjectWorldPos, _previousTarget);
+  camera.position.add(_targetDelta);
+  controls.target.copy(_subjectWorldPos);
+  controls.update();
+
+  _offset.subVectors(camera.position, _subjectWorldPos);
+  _outward.copy(_subjectWorldPos);
+  if (_outward.lengthSq() === 0) {
+    _outward.set(0, 0, 1);
+  } else {
+    _outward.normalize();
+  }
+
+  if (_offset.lengthSq() === 0) {
+    _offset.copy(_outward).multiplyScalar(minDistance);
+  }
+
+  const outwardDistance = _offset.dot(_outward);
+  _perp.copy(_offset).addScaledVector(_outward, -outwardDistance);
+
+  const safeOutwardDistance = Math.max(
+    outwardDistance,
+    minOutwardOffset,
+    Math.sqrt(Math.max(minDistance * minDistance - _perp.lengthSq(), 0))
+  );
+
+  _offset.copy(_perp).addScaledVector(_outward, safeOutwardDistance);
+  camera.position.copy(_subjectWorldPos).add(_offset);
+  camera.lookAt(_subjectWorldPos);
+  controls.target.copy(_subjectWorldPos);
+}
 
 // ─── Scene Setup ─────────────────────────────────────────────────────────────
 const container = document.getElementById('canvas-container');
@@ -57,34 +116,31 @@ moon.add(nav_camera);
 // Navigation Camera Controls
 const nav_controls = new OrbitControls(nav_camera, renderer.domElement);
 nav_controls.target.copy(moon.position);
-nav_controls.enableDamping = true;
-nav_controls.dampingFactor = 0.8;
-nav_controls.rotateSpeed = 0.4;
-nav_controls.zoomSpeed = 0.8;
-nav_controls.enablePan = false; // dragging should only orbit
-nav_controls.minDistance = 12;
-nav_controls.maxDistance = 50;
+configureOrbitControls(nav_controls, 12, 50);
 
 // ─── Secondary Camera (Satellite, orbit-controllable around the spacecraft) ──────
+const spacecraft_bounds = new THREE.Box3().setFromObject(spacecraft.model);
+const spacecraft_sphere = new THREE.Sphere();
+spacecraft_bounds.getBoundingSphere(spacecraft_sphere);
+
+const sat_min_distance = Math.max(spacecraft_sphere.radius * 0.6, 0.15);
+const sat_min_outward_offset = Math.max(moon_radius * 0.005, 0.08);
+const sat_initial_distance = Math.max(1, sat_min_distance);
+
 const sat_camera = new THREE.PerspectiveCamera(60, W() / H(), 0.1, 2000);
-const sat_camera_pos = positionCamera(sat_camera, spacecraft.model, new THREE.Vector3(1, 0, 0));
+const sat_camera_pos = positionCamera(sat_camera, spacecraft.model, getOutwardOffset(spacecraft.model, sat_initial_distance));
 
 scene.add(sat_camera);
 
 // Satellite Camera Controls
 const sat_controls = new OrbitControls(sat_camera, renderer.domElement);
-sat_controls.target.copy(spacecraft.model.position);
-sat_controls.enableDamping = true;
-sat_controls.dampingFactor = 0.8;
-sat_controls.rotateSpeed = 0.4;
-sat_controls.zoomSpeed = 0.8;
-sat_controls.enablePan = false; // dragging should only orbit
-sat_controls.minDistance = 12;
-sat_controls.maxDistance = 30;
+spacecraft.model.getWorldPosition(_subjectWorldPos);
+sat_controls.target.copy(_subjectWorldPos);
+configureOrbitControls(sat_controls, sat_min_distance, 12);
 
 //Other stuff
 let active_camera = nav_camera;
-let active_camera_name = "navigator";
+let active_camera_pos = nav_camera_pos;
 
 document.getElementById('loading').classList.add('hidden');
 
@@ -92,8 +148,14 @@ window.addEventListener('keydown', (e) => {
   
   // Camera switching with 'C' key
   if (e.key.toLowerCase() === 'c') {
-    if(active_camera === nav_camera) active_camera = sat_camera;
-    else if(active_camera === sat_camera) active_camera = nav_camera;
+    if(active_camera === nav_camera) {
+      active_camera = sat_camera;
+      active_camera_pos = sat_camera_pos;
+    }
+    else if(active_camera === sat_camera){
+      active_camera = nav_camera;
+      active_camera_pos = nav_camera_pos;
+    }
     console.log('Switched to', active_camera === nav_camera ? 'navigator' : 'spacecraft', 'camera');
   }
 });
@@ -117,16 +179,18 @@ const cameraModeLabel = document.getElementById('camera-mode');
 
 function animate(){
   requestAnimationFrame(animate);
+  nav_controls.update();
 
   //Spacecraft Orbit
   spacecraft.updateOrbitAnimation();
+  updateTrackingOrbitCamera(sat_camera, sat_controls, spacecraft.model, sat_min_distance, sat_min_outward_offset);
 
   //Spacecraft Animation
   solarPanelsAnimation(spacecraft_solar_panels);
-  updateLatLon(nav_camera, moon, nav_camera_pos);
+  updateLatLon(active_camera, active_camera_pos);
 
   //currently active camera and navigation camera position update
-  renderer.render(scene, nav_camera);
+  renderer.render(scene, active_camera);
 
   // Update location HUD
   // const latDeg = (active_camera.state.lat * 180 / Math.PI).toFixed(2);
@@ -144,7 +208,7 @@ function animate(){
   cameraModeLabel.textContent = `CAMERA: ${active_camera === nav_camera ? 'NAVIGATOR' : 'SPACECRAFT'}`;
 
   // Update 3D labels on screen
-  labelOverlay.update(nav_camera, nav_camera_pos);
+  labelOverlay.update(active_camera, active_camera_pos);
 }
 
 animate();
