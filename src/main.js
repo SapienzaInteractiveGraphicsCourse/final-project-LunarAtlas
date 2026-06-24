@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { buildStars } from './starfield.js';
-import { createMoon } from './moon.js';
-import { createMoonAtmoshpere } from './moon_atmosphere.js';
+import { createMoon, createMoonAtmoshpere } from './moon.js';
 import { positionCamera, updateLatLon } from './cameras.js';
 import { setupLighting } from './lighting.js';
 import { Spacecraft, solarPanelsAnimation } from './spacecraft.js';
