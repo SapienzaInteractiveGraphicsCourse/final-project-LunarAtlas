@@ -1,82 +1,76 @@
 // starfield.js
 import * as THREE from 'three';
 
-export function buildStars(scene) {
-  
-  // Create realistic starfield very far away
-  const starCount = 10000;
-  const positions = new Float32Array(starCount * 3);
-  const colors = new Float32Array(starCount * 3);
-  const sizes = new Float32Array(starCount);
+const loader = new THREE.TextureLoader();
 
-  // Distance from origin where stars are placed
-  const starDistance = 800;
-
-  for (let i = 0; i < starCount; i++) {
-    // Uniform sphere distribution on a distant sphere
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.acos(2 * Math.random() - 1);
-
-    positions[i * 3] = starDistance * Math.sin(phi) * Math.cos(theta);
-    positions[i * 3 + 1] = starDistance * Math.sin(phi) * Math.sin(theta);
-    positions[i * 3 + 2] = starDistance * Math.cos(phi);
-
-    // Apparent magnitude distribution (brighter stars are rarer)
-    // Power law distribution favoring dimmer stars
-    const magnitude = Math.pow(Math.random(), 2) * 6; // 0-6 magnitude scale
-    const brightness = Math.pow(10, -magnitude / 2.5); // Convert to linear brightness
-
-    // Star color variation based on temperature
-    const temp = Math.random();
-    let r_color, g_color, b_color;
-
-    if (temp < 0.7) {
-      // White stars (G/F class, like our Sun)
-      r_color = 1;
-      g_color = 1;
-      b_color = 1;
-    } else if (temp < 0.9) {
-      // Blue-white stars (A class)
-      r_color = 0.9 + Math.random() * 0.1;
-      g_color = 0.95 + Math.random() * 0.05;
-      b_color = 1.0;
-    } else {
-      // Blue giants (B/O class) - hotter but rarer
-      r_color = 0.6 + Math.random() * 0.2;
-      g_color = 0.8 + Math.random() * 0.15;
-      b_color = 1.0;
+export function getStarfield({ numStars = 1000 } = {}) {
+  function randomSpherePoint() {
+    const radius = Math.random() * 500 + 1000;
+    const u = Math.random();
+    const v = Math.random();
+    const theta = 2 * Math.PI * u;
+    const phi = Math.acos(2 * v - 1);
+    let x = radius * Math.sin(phi) * Math.cos(theta);
+    let y = radius * Math.sin(phi) * Math.sin(theta);
+    let z = radius * Math.cos(phi);
+    const rate = Math.random() * 0.004;
+    const prob = Math.random();
+    const light = Math.random()+0.5;
+    function update(t) {
+      // refine me
+      const lightness = prob > 0.9 ? light + Math.sin(t * rate) * 1 : light;
+      return lightness;
     }
-
-    colors[i * 3] = r_color;
-    colors[i * 3 + 1] = g_color;
-    colors[i * 3 + 2] = b_color;
-
-    // Size based on magnitude (apparent brightness)
-    sizes[i] = Math.max(0.1, brightness * 1.2);
+    return {
+      pos: new THREE.Vector3(x, y, z),
+      update,
+      minDist: radius,
+    };
   }
-
+  const verts = [];
+  const colors = [];
+  const positions = [];
+  let col;
+  for (let i = 0; i < numStars; i += 1) {
+    let p = randomSpherePoint();
+    const { pos } = p;
+    positions.push(p);
+    col = new THREE.Color().setHSL(0.6, 0.2, Math.random());
+    verts.push(pos.x, pos.y, pos.z);
+    colors.push(col.r, col.g, col.b);
+  }
   const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
+  geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   const mat = new THREE.PointsMaterial({
+    size: 0.3,
     vertexColors: true,
-    size: 2.5,
-    sizeAttenuation: true,
-    transparent: true,
-    opacity: 1,
-    fog: false,
+    map: new THREE.TextureLoader().load(
+      "src/assets/circle.png"
+    ),
   });
 
-  const stars = new THREE.Points(geo, mat);
-  scene.add(stars);
+  const points = new THREE.Points(geo, mat);
 
-  // Add celestial bodies
-  addEarthAndSun(scene);
+  function update(t) {
+    let col;
+    const colors = [];
+    for (let i = 0; i < numStars; i += 1) {
+      const p = positions[i];
+      const { update } = p;
+      let bright = update(t);
+      col = new THREE.Color().setHSL(0.6, 0.2, bright);
+      colors.push(col.r, col.g, col.b);
+    }
+    geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+    geo.attributes.color.needsUpdate = true;
+  }
+
+  points.userData = { update };
+  return points;
 }
 
-function addEarthAndSun(scene) {
+export function addEarthAndSun(scene) {
   // Moon radius from main.js is 10 units
   // Real Earth-Moon distance: ~384,400 km
   // Real Moon radius: 1,737 km, Real Earth radius: 6,371 km

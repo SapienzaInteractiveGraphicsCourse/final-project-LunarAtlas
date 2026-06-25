@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { buildStars } from './starfield.js';
+import { getStarfield, addEarthAndSun } from './starfield.js';
 import { createMoon, createMoonAtmoshpere } from './moon.js';
 import { positionCamera, updateLatLon } from './cameras.js';
 import { setupLighting } from './lighting.js';
@@ -84,7 +84,9 @@ container.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 
 // ─── Starfield ────────────────────────────────────────────────────────────────
-buildStars(scene);
+const stars = getStarfield({numStars: 2000});
+scene.add(stars);
+addEarthAndSun(scene);
 
 // ─── Moon ─────────────────────────────────────────────────────────────────────
 const moon = createMoon(renderer, moon_radius);
@@ -176,9 +178,12 @@ const cameraModeLabel = document.getElementById('camera-mode');
 
 //─── Animations ───────────────────────────────────────────────────────────────
 
-function animate(){
+function animate(t = 0){
   requestAnimationFrame(animate);
   nav_controls.update();
+
+  // Stars animation
+  stars.userData.update(t);
 
   //Spacecraft Orbit
   spacecraft.updateOrbitAnimation();
