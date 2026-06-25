@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { getStarfield, addEarthAndSun } from './starfield.js';
+import { getStarfield, addEarthAndSun } from './spaceEnvironment.js';
 import { createMoon, createMoonAtmoshpere } from './moon.js';
 import { positionCamera } from './cameras.js';
 import { setupLighting } from './lighting.js';
@@ -86,20 +86,20 @@ container.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 
+// ─── Moon ─────────────────────────────────────────────────────────────────────
+const moon = createMoon(renderer, moon_radius);
+scene.add(moon);
+
+// Moon Atmosphere 
+scene.add(createMoonAtmoshpere(moon_radius))
+ 
+
 // ─── Starfield ────────────────────────────────────────────────────────────────
 const stars = getStarfield({numStars: 2000});
 scene.add(stars);
 addEarthAndSun(scene, moon_radius);
 
-// ─── Moon ─────────────────────────────────────────────────────────────────────
-const moon = createMoon(renderer, moon_radius);
-scene.add(moon);
-
-// ─── Moon Atmosphere ───────────────────────────────────────────────────────────
-scene.add(createMoonAtmoshpere(moon_radius))
- 
 // ─── Lighting ─────────────────────────────────────────────────────────────────
-// Ambient (deep space faint light)
 setupLighting(scene, moon_radius);
  
 // ─── Orbiting Spacecraft ──────────────────────────────────────────────────────────
@@ -184,9 +184,6 @@ const cameraModeLabel = document.getElementById('camera-mode');
 function animate(){
   requestAnimationFrame(animate);
   nav_controls.update();
-
-  // Stars animation
-  //stars.userData.update(t);
 
   //Spacecraft Orbit
   spacecraft.updateOrbitAnimation();

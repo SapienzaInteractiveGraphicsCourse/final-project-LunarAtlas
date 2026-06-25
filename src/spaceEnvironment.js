@@ -31,7 +31,7 @@ export function getStarfield({numStars = 1000} = {}) {
   const sizes = new Float32Array(numStars);
 
   // Distance from origin where stars are placed
-  const starDistance = 800;
+  const starDistance = 1000;
 
   for (let i = 0; i < numStars; i++) {
     // Uniform sphere distribution on a distant sphere
