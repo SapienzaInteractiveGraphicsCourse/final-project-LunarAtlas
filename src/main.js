@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { getStarfield, addEarthAndSun } from './starfield.js';
 import { createMoon, createMoonAtmoshpere } from './moon.js';
-import { positionCamera, updateLatLon } from './cameras.js';
+import { positionCamera } from './cameras.js';
 import { setupLighting } from './lighting.js';
 import { Spacecraft, solarPanelsAnimation } from './spacecraft.js';
 import { createLabelOverlay } from './label_overlay.js';
@@ -191,18 +191,18 @@ function animate(t = 0){
 
   //Spacecraft Animation
   solarPanelsAnimation(spacecraft_solar_panels);
-  updateLatLon(active_camera, active_camera_pos);
+  active_camera_pos.updateLatLon();
 
   //currently active camera and navigation camera position update
   renderer.render(scene, active_camera);
 
   // Update location HUD
-  // const latDeg = (active_camera.state.lat * 180 / Math.PI).toFixed(2);
-  // const lonDeg = (active_camera.state.lon * 180 / Math.PI).toFixed(2);
-  // const ns = latDeg >= 0 ? '' : '-';
-  // const ew = lonDeg >= 0 ? '' : '-';
-  // latLabel.textContent = `Lat: ${ns}${Math.abs(latDeg)}°`;
-  // lonLabel.textContent = `Lon: ${ew}${Math.abs(lonDeg)}°`;
+  const latDeg = (active_camera_pos.lat * 180 / Math.PI).toFixed(2);
+  const lonDeg = (active_camera_pos.lon * 180 / Math.PI).toFixed(2);
+  const ns = latDeg >= 0 ? '' : '-';
+  const ew = lonDeg >= 0 ? '' : '-';
+  latLabel.textContent = `Lat: ${ns}${Math.abs(latDeg)}°`;
+  lonLabel.textContent = `Lon: ${ew}${Math.abs(lonDeg)}°`;
 
   // const crater = labelOverlay.getNearestCrater(active_camera.state.lat, active_camera.state.lon);
   // craterLabel.textContent  = crater ? crater.name : '—';
