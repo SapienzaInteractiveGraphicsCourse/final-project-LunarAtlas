@@ -1,7 +1,27 @@
 // starfield.js
 import * as THREE from 'three';
+import { EARTH_DIRECTION, SUN_DIRECTION } from './lighting.js';
 
-const loader = new THREE.TextureLoader();
+function makeSunTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+
+  const ctx = canvas.getContext('2d');
+  const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+  gradient.addColorStop(0.0, 'rgba(255,255,255,1)');
+  gradient.addColorStop(0.08, 'rgba(255,248,214,1)');
+  gradient.addColorStop(0.16, 'rgba(255,211,96,0.95)');
+  gradient.addColorStop(0.38, 'rgba(255,166,48,0.28)');
+  gradient.addColorStop(1.0, 'rgba(255,120,20,0)');
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 256, 256);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
 
 export function getStarfield({ numStars = 1000 } = {}) {
   function randomSpherePoint() {
@@ -10,59 +30,59 @@ export function getStarfield({ numStars = 1000 } = {}) {
     const v = Math.random();
     const theta = 2 * Math.PI * u;
     const phi = Math.acos(2 * v - 1);
-    let x = radius * Math.sin(phi) * Math.cos(theta);
-    let y = radius * Math.sin(phi) * Math.sin(theta);
-    let z = radius * Math.cos(phi);
+
+    const x = radius * Math.sin(phi) * Math.cos(theta);
+    const y = radius * Math.sin(phi) * Math.sin(theta);
+    const z = radius * Math.cos(phi);
     const rate = Math.random() * 0.004;
     const prob = Math.random();
-    const light = Math.random()+0.5;
-    function update(t) {
-      // refine me
-      const lightness = prob > 0.9 ? light + Math.sin(t * rate) * 1 : light;
-      return lightness;
-    }
+    const light = Math.random() + 0.5;
+
     return {
       pos: new THREE.Vector3(x, y, z),
-      update,
-      minDist: radius,
+      update(t) {
+        return prob > 0.9 ? light + Math.sin(t * rate) : light;
+      },
     };
   }
+
   const verts = [];
   const colors = [];
   const positions = [];
-  let col;
+
   for (let i = 0; i < numStars; i += 1) {
-    let p = randomSpherePoint();
-    const { pos } = p;
-    positions.push(p);
-    col = new THREE.Color().setHSL(0.6, 0.2, Math.random());
-    verts.push(pos.x, pos.y, pos.z);
-    colors.push(col.r, col.g, col.b);
+    const star = randomSpherePoint();
+    positions.push(star);
+    verts.push(star.pos.x, star.pos.y, star.pos.z);
+
+    const color = new THREE.Color().setHSL(0.6, 0.2, Math.random());
+    colors.push(color.r, color.g, color.b);
   }
+
   const geo = new THREE.BufferGeometry();
-  geo.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
-  geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
   const mat = new THREE.PointsMaterial({
     size: 0.3,
     vertexColors: true,
-    map: new THREE.TextureLoader().load(
-      "src/assets/circle.png"
-    ),
+    map: new THREE.TextureLoader().load('src/assets/circle.png'),
+    transparent: true,
+    depthWrite: false,
   });
 
   const points = new THREE.Points(geo, mat);
 
   function update(t) {
-    let col;
-    const colors = [];
+    const nextColors = [];
+
     for (let i = 0; i < numStars; i += 1) {
-      const p = positions[i];
-      const { update } = p;
-      let bright = update(t);
-      col = new THREE.Color().setHSL(0.6, 0.2, bright);
-      colors.push(col.r, col.g, col.b);
+      const bright = positions[i].update(t);
+      const color = new THREE.Color().setHSL(0.6, 0.2, bright);
+      nextColors.push(color.r, color.g, color.b);
     }
-    geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(nextColors, 3));
     geo.attributes.color.needsUpdate = true;
   }
 
@@ -70,111 +90,77 @@ export function getStarfield({ numStars = 1000 } = {}) {
   return points;
 }
 
-export function addEarthAndSun(scene) {
-  // Moon radius from main.js is 10 units
-  // Real Earth-Moon distance: ~384,400 km
-  // Real Moon radius: 1,737 km, Real Earth radius: 6,371 km
-  // Scale factor: 10 / 1,737 ≈ 0.00576 units/km
-  // Scaled Earth-Moon distance: 384,400 * 0.00576 ≈ 2,214 units
-  
-  const moonRadius = 10;
-  const earthMoonDistance = 240; // Scaled for visibility while maintaining realism
-  const earthRadius = 6.371; // Scaled relative to moon (6,371/1,737 * 10)
-  
-  // Position Earth in the sky (at an angle from the moon)
-  // Earth appears in the lunar sky at roughly this position
-  const earthAngle = 0; // 54 degrees
-  const earthElevation = 0; // 36 degrees above equator
-  
-  const earth_x = earthMoonDistance * Math.cos(earthElevation) * Math.cos(earthAngle);
-  const earth_y = earthMoonDistance * Math.sin(earthElevation);
-  const earth_z = earthMoonDistance * Math.cos(earthElevation) * Math.sin(earthAngle);
-  
-  // Create Earth with texture
-  const earthGeo = new THREE.SphereGeometry(earthRadius, 64, 64);
+export function addEarthAndSun(scene, moonRadius = 10) {
+  const earthMoonDistance = 240;
+  const earthRadius = moonRadius * 0.37;
+  const earthPosition = EARTH_DIRECTION.clone().multiplyScalar(earthMoonDistance);
+
   const textureLoader = new THREE.TextureLoader();
   const earthTexture = textureLoader.load('./src/assets/earth_texture.jpg');
-  const earthMat = new THREE.MeshPhongMaterial({
-    map: earthTexture,
-    emissive: 0x1a3a52,
-    shininess: 30,
-    side: THREE.FrontSide,
-  });
-  
-  const earth = new THREE.Mesh(earthGeo, earthMat);
-  earth.position.set(earth_x, earth_y, earth_z);
+  earthTexture.colorSpace = THREE.SRGBColorSpace;
+
+  const earth = new THREE.Mesh(
+    new THREE.SphereGeometry(earthRadius, 64, 64),
+    new THREE.MeshStandardMaterial({
+      map: earthTexture,
+      emissive: 0x020810,
+      emissiveIntensity: 0.35,
+      roughness: 0.65,
+      metalness: 0,
+    })
+  );
+  earth.position.copy(earthPosition);
   earth.userData.isEarth = true;
   earth.userData.name = 'Earth';
   scene.add(earth);
-  
-  // Add cloud layer to Earth
-  const cloudGeo = new THREE.SphereGeometry(earthRadius * 1.02, 64, 64);
-  const cloudMat = new THREE.MeshPhongMaterial({
-    color: 0xffffff,
-    transparent: true,
-    opacity: 0.3,
-    shininess: 10,
-  });
-  const clouds = new THREE.Mesh(cloudGeo, cloudMat);
+
+  const clouds = new THREE.Mesh(
+    new THREE.SphereGeometry(earthRadius * 1.02, 64, 64),
+    new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.24,
+      roughness: 0.9,
+      depthWrite: false,
+    })
+  );
   clouds.position.copy(earth.position);
   scene.add(clouds);
-  
-  // Add slight glow to Earth atmosphere
-  const atmosphereGeo = new THREE.SphereGeometry(earthRadius * 1.08, 32, 32);
-  const atmosphereMat = new THREE.MeshBasicMaterial({
-    color: 0x87ceeb,
-    transparent: true,
-    opacity: 0.15,
-    side: THREE.BackSide,
-  });
-  const atmosphere = new THREE.Mesh(atmosphereGeo, atmosphereMat);
+
+  const atmosphere = new THREE.Mesh(
+    new THREE.SphereGeometry(earthRadius * 1.08, 32, 32),
+    new THREE.MeshBasicMaterial({
+      color: 0x87ceeb,
+      transparent: true,
+      opacity: 0.15,
+      side: THREE.BackSide,
+      depthWrite: false,
+    })
+  );
   atmosphere.position.copy(earth.position);
   scene.add(atmosphere);
-  
-  // Sun positioning - approximately 150 million km away (400x Earth-Moon distance)
-  const sunDistance = earthMoonDistance * 300;
-  
-  // Sun is roughly opposite to Earth from the Moon during certain times
-  // Position at angle to create realistic lighting
-  const sunAngle = Math.PI * 1.1;
-  const sunElevation = Math.PI * 0.15;
-  
-  const sun_x = sunDistance * Math.cos(sunElevation) * Math.cos(sunAngle);
-  const sun_y = sunDistance * Math.sin(sunElevation);
-  const sun_z = sunDistance * Math.cos(sunElevation) * Math.sin(sunAngle);
-  
-  // Create Sun
-  const sunGeo = new THREE.SphereGeometry(20, 32, 32);
-  const sunMat = new THREE.MeshBasicMaterial({
-    color: 0xfdb813,
-  });
-  const sun = new THREE.Mesh(sunGeo, sunMat);
-  sun.position.set(sun_x, sun_y, sun_z);
+
+  const sun = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: makeSunTexture(),
+    color: 0xfff1c0,
+    transparent: true,
+    depthWrite: false,
+    depthTest: true,
+    blending: THREE.AdditiveBlending,
+    toneMapped: false,
+  }));
+  sun.position.copy(SUN_DIRECTION).multiplyScalar(1300);
+  sun.scale.setScalar(85);
   sun.userData.isSun = true;
   sun.userData.name = 'Sun';
   scene.add(sun);
-  
-  // Add sun glow/corona
-  const sunGlowGeo = new THREE.SphereGeometry(40, 16, 16);
-  const sunGlowMat = new THREE.MeshBasicMaterial({
-    color: 0xfdb813,
-    transparent: true,
-    opacity: 0.2,
-    side: THREE.BackSide,
-  });
-  const sunGlow = new THREE.Mesh(sunGlowGeo, sunGlowMat);
-  sunGlow.position.copy(sun.position);
-  scene.add(sunGlow);
-  
-  // Rotate Earth continuously
+
   function animateEarth() {
-    if (earth) {
-      earth.rotation.y += 0.0001;
-    }
-    if (clouds) {
-      clouds.rotation.y += 0.0002;
-    }
+    earth.rotation.y += 0.0001;
+    clouds.rotation.y += 0.0002;
     requestAnimationFrame(animateEarth);
   }
   animateEarth();
+
+  return { earth, clouds, atmosphere, sun };
 }

@@ -77,6 +77,9 @@ const H = () => window.innerHeight;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(W(), H());
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 container.appendChild(renderer.domElement);
@@ -86,7 +89,7 @@ const scene = new THREE.Scene();
 // ─── Starfield ────────────────────────────────────────────────────────────────
 const stars = getStarfield({numStars: 2000});
 scene.add(stars);
-addEarthAndSun(scene);
+addEarthAndSun(scene, moon_radius);
 
 // ─── Moon ─────────────────────────────────────────────────────────────────────
 const moon = createMoon(renderer, moon_radius);
@@ -97,7 +100,7 @@ scene.add(createMoonAtmoshpere(moon_radius))
  
 // ─── Lighting ─────────────────────────────────────────────────────────────────
 // Ambient (deep space faint light)
-setupLighting(scene);
+setupLighting(scene, moon_radius);
  
 // ─── Orbiting Spacecraft ──────────────────────────────────────────────────────────
 const spacecraft = new Spacecraft('./src/assets/gateway_core.glb', moon_radius +1);

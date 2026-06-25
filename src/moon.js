@@ -7,7 +7,7 @@ export function createMoon(renderer, moon_radius) {
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
   const colorMap = texLoader.load("./src/assets/lroc_color_16bit_srgb.png", tex => {
-    tex.encoding = THREE.sRGBEncoding;
+    tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = maxAniso;
     tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
     tex.minFilter = THREE.LinearMipMapLinearFilter;
@@ -40,7 +40,8 @@ export function createMoon(renderer, moon_radius) {
     displacementMap: disMap,
     displacementScale: 0.05,
     bumpMap: bumpMap,
-    bumpScale: 10,
+    bumpScale: 5,
+    roughness: 0.92,
     metalness: 0.0
   });
 
