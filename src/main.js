@@ -181,12 +181,12 @@ const cameraModeLabel = document.getElementById('camera-mode');
 
 //─── Animations ───────────────────────────────────────────────────────────────
 
-function animate(t = 0){
+function animate(){
   requestAnimationFrame(animate);
   nav_controls.update();
 
   // Stars animation
-  stars.userData.update(t);
+  //stars.userData.update(t);
 
   //Spacecraft Orbit
   spacecraft.updateOrbitAnimation();

@@ -23,71 +23,75 @@ function makeSunTexture() {
   return texture;
 }
 
-export function getStarfield({ numStars = 1000 } = {}) {
-  function randomSpherePoint() {
-    const radius = Math.random() * 500 + 1000;
-    const u = Math.random();
-    const v = Math.random();
-    const theta = 2 * Math.PI * u;
-    const phi = Math.acos(2 * v - 1);
+export function getStarfield({numStars = 1000} = {}) {
+  
+  // Create realistic starfield very far away
+  const positions = new Float32Array(numStars * 3);
+  const colors = new Float32Array(numStars * 3);
+  const sizes = new Float32Array(numStars);
 
-    const x = radius * Math.sin(phi) * Math.cos(theta);
-    const y = radius * Math.sin(phi) * Math.sin(theta);
-    const z = radius * Math.cos(phi);
-    const rate = Math.random() * 0.004;
-    const prob = Math.random();
-    const light = Math.random() + 0.5;
+  // Distance from origin where stars are placed
+  const starDistance = 800;
 
-    return {
-      pos: new THREE.Vector3(x, y, z),
-      update(t) {
-        return prob > 0.9 ? light + Math.sin(t * rate) : light;
-      },
-    };
-  }
+  for (let i = 0; i < numStars; i++) {
+    // Uniform sphere distribution on a distant sphere
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
 
-  const verts = [];
-  const colors = [];
-  const positions = [];
+    positions[i * 3] = starDistance * Math.sin(phi) * Math.cos(theta);
+    positions[i * 3 + 1] = starDistance * Math.sin(phi) * Math.sin(theta);
+    positions[i * 3 + 2] = starDistance * Math.cos(phi);
 
-  for (let i = 0; i < numStars; i += 1) {
-    const star = randomSpherePoint();
-    positions.push(star);
-    verts.push(star.pos.x, star.pos.y, star.pos.z);
+    // Apparent magnitude distribution (brighter stars are rarer)
+    // Power law distribution favoring dimmer stars
+    const magnitude = Math.pow(Math.random(), 2) * 6; // 0-6 magnitude scale
+    const brightness = Math.pow(10, -magnitude / 2.5); // Convert to linear brightness
 
-    const color = new THREE.Color().setHSL(0.6, 0.2, Math.random());
-    colors.push(color.r, color.g, color.b);
+    // Star color variation based on temperature
+    const temp = Math.random();
+    let r_color, g_color, b_color;
+
+    if (temp < 0.7) {
+      // White stars (G/F class, like our Sun)
+      r_color = 1;
+      g_color = 1;
+      b_color = 1;
+    } else if (temp < 0.9) {
+      // Blue-white stars (A class)
+      r_color = 0.9 + Math.random() * 0.1;
+      g_color = 0.95 + Math.random() * 0.05;
+      b_color = 1.0;
+    } else {
+      // Blue giants (B/O class) - hotter but rarer
+      r_color = 0.6 + Math.random() * 0.2;
+      g_color = 0.8 + Math.random() * 0.15;
+      b_color = 1.0;
+    }
+
+    colors[i * 3] = r_color;
+    colors[i * 3 + 1] = g_color;
+    colors[i * 3 + 2] = b_color;
+
+    // Size based on magnitude (apparent brightness)
+    sizes[i] = Math.max(0.1, brightness * 1.2);
   }
 
   const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
 
   const mat = new THREE.PointsMaterial({
-    size: 0.3,
     vertexColors: true,
-    map: new THREE.TextureLoader().load('src/assets/circle.png'),
+    size: 2,
+    sizeAttenuation: true,
     transparent: true,
-    depthWrite: false,
+    opacity: 1,
+    fog: false,
   });
 
-  const points = new THREE.Points(geo, mat);
-
-  function update(t) {
-    const nextColors = [];
-
-    for (let i = 0; i < numStars; i += 1) {
-      const bright = positions[i].update(t);
-      const color = new THREE.Color().setHSL(0.6, 0.2, bright);
-      nextColors.push(color.r, color.g, color.b);
-    }
-
-    geo.setAttribute('color', new THREE.Float32BufferAttribute(nextColors, 3));
-    geo.attributes.color.needsUpdate = true;
-  }
-
-  points.userData = { update };
-  return points;
+  const stars = new THREE.Points(geo, mat);
+  return stars;
 }
 
 export function addEarthAndSun(scene, moonRadius = 10) {
