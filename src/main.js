@@ -197,16 +197,16 @@ function animate(t = 0){
   renderer.render(scene, active_camera);
 
   // Update location HUD
-  const latDeg = (active_camera_pos.lat * 180 / Math.PI).toFixed(2);
-  const lonDeg = (active_camera_pos.lon * 180 / Math.PI).toFixed(2);
+  const latDeg = (nav_camera_pos.lat * 180 / Math.PI).toFixed(2);
+  const lonDeg = (nav_camera_pos.lon * 180 / Math.PI).toFixed(2);
   const ns = latDeg >= 0 ? '' : '-';
   const ew = lonDeg >= 0 ? '' : '-';
   latLabel.textContent = `Lat: ${ns}${Math.abs(latDeg)}°`;
   lonLabel.textContent = `Lon: ${ew}${Math.abs(lonDeg)}°`;
 
-  // const crater = labelOverlay.getNearestCrater(active_camera.state.lat, active_camera.state.lon);
-  // craterLabel.textContent  = crater ? crater.name : '—';
-  // craterLabel.style.opacity = crater ? '1' : '0.3';
+  const crater = labelOverlay.getNearestFeature(nav_camera_pos.lat, nav_camera_pos.lon);
+  craterLabel.textContent  = crater ? crater.name : '—';
+  craterLabel.style.opacity = crater ? '1' : '0.3';
 
   // Update camera mode display
   cameraModeLabel.textContent = `CAMERA: ${active_camera === nav_camera ? 'NAVIGATOR' : 'SPACECRAFT'}`;

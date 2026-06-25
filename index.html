@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Moon Tour</title>
+  <title>Lunar Atlas</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
  
@@ -199,6 +199,32 @@
       font-size: 8px;
     }
 
+    /* Mountain Range — purple */
+    .moon-label--mountain {
+      color: rgba(255, 120, 220, 0.85);
+    }
+    .moon-label--mountain .moon-label__dot {
+      width: 6px; height: 6px;
+      background: rgba(255, 120, 220, 0.8);
+      border-radius: 2px;
+    }
+    .moon-label--mountain .moon-label__text {
+      font-size: 8px;
+    }
+
+    /* Valley — light blue */
+    .moon-label--valley {
+      color: rgba(120, 220, 255, 0.85);
+    }
+    .moon-label--valley .moon-label__dot {
+      width: 6px; height: 6px;
+      background: rgba(120, 220, 255, 0.8);
+      border-radius: 2px;
+    }
+    .moon-label--valley .moon-label__text {
+      font-size: 8px;
+    }
+
   </style>
 </head>
 <body>
@@ -221,7 +247,9 @@
     <div class="control" style="margin-top:10px; font-size:8px; color:rgba(255,255,255,0.4);">
       <span style="color:rgba(160,220,255,0.7);">●</span> Crater &nbsp;
       <span style="color:rgba(255,210,130,0.7);">●</span> Mare &nbsp;
-      <span style="color:rgba(120,255,160,0.8);">▪</span> Apollo
+      <span style="color:rgba(120,255,160,0.8);">▪</span> Landing Site &nbsp;
+      <span style="color:rgba(255,120,220,0.8);">▲</span> Mountain Range &nbsp;
+      <span style="color:rgba(120,220,255,0.8);">▬</span> Valley &nbsp;
     </div>
   </div>
 

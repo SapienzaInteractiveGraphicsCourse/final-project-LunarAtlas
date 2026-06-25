@@ -69,7 +69,7 @@ export function createLabelOverlay(moon_radius) {
     }
   }
 
-  function getNearestCrater(lat, lon) {
+  function getNearestFeature(lat, lon) {
     const latD = lat * 180 / Math.PI;
     const lonD = lon * 180 / Math.PI;
     let best = null;
@@ -86,5 +86,5 @@ export function createLabelOverlay(moon_radius) {
     return bestDist < 15 ? best : null;
   }
 
-  return { update, getNearestCrater };
+  return { update, getNearestFeature };
 }

@@ -14,7 +14,6 @@ export const FEATURES = [
   { name: "Arzachel",           lat: -18.2, lon:   -1.9, type: 'crater' },
   { name: "Theophilus",         lat: -11.4, lon:   26.4, type: 'crater' },
   { name: "Langrenus",          lat:  -8.9, lon:   61.1, type: 'crater' },
-  { name: "Tycho",              lat: -43.3, lon:  -11.2, type: 'crater' },
   { name: "Stevinus",           lat: -32.5, lon:   54.2, type: 'crater' },
   { name: "Petavius",           lat: -25.1, lon:   60.4, type: 'crater' },
   { name: "Furnerius",          lat: -36.0, lon:   60.4, type: 'crater' },
@@ -46,7 +45,78 @@ export const FEATURES = [
   { name: "Hercules",           lat:  46.7, lon:   39.1, type: 'crater' },
   { name: "Posidonius",         lat:  31.8, lon:   29.9, type: 'crater' },
   { name: "Cleomedes",          lat:  27.7, lon:   55.5, type: 'crater' },
-  // Maria (seas)
+
+  // Additional prominent craters (nearside + farside)
+
+  // Nearside north
+  { name: "Anaxagoras",       lat:  73.5, lon:  -10.0, type: 'crater' },
+  { name: "Goldschmidt",      lat:  73.0, lon:   -2.0, type: 'crater' },
+  { name: "Plaskett",         lat:  82.5, lon:  -10.0, type: 'crater' },
+
+  // Eastern limb
+  { name: "Messier",          lat:  -1.9, lon:   47.6, type: 'crater' },
+  { name: "Janssen",          lat: -45.0, lon:   41.0, type: 'crater' },
+  { name: "Vendelinus",       lat: -16.4, lon:   60.0, type: 'crater' },
+  { name: "Humboldt",         lat: -27.0, lon:   81.0, type: 'crater' },
+
+  // Western limb
+  { name: "Riccioli",         lat:  -3.0, lon:  -74.0, type: 'crater' },
+  { name: "Byrgius",          lat: -24.7, lon:  -65.3, type: 'crater' },
+  { name: "Darwin",           lat: -20.0, lon:  -70.0, type: 'crater' },
+
+  // South polar region
+  { name: "Moretus",          lat: -70.5, lon:   -5.0, type: 'crater' },
+  { name: "Newton",           lat: -77.7, lon:   16.0, type: 'crater' },
+  { name: "Cabeus",           lat: -84.9, lon:  -35.5, type: 'crater' },
+  { name: "Shackleton",       lat: -89.9, lon:    0.0, type: 'crater' },
+  { name: "Malapert",         lat: -85.0, lon:    0.0, type: 'crater' },
+
+  // North polar region
+  { name: "Peary",            lat:  88.6, lon:   33.0, type: 'crater' },
+  { name: "Hermite",          lat:  86.0, lon:  -90.0, type: 'crater' },
+  { name: "Rozhdestvenskiy",  lat:  84.0, lon: -156.0, type: 'crater' },
+
+  // Farside major craters
+  { name: "Tsiolkovskiy",     lat: -20.4, lon:  129.1, type: 'crater' },
+  { name: "Korolev",          lat:  -4.0, lon: -157.0, type: 'crater' },
+  { name: "Mendeleev",        lat:   5.7, lon:  141.0, type: 'crater' },
+  { name: "Apollo",           lat: -36.0, lon: -151.0, type: 'crater' },
+  { name: "Aitken",           lat: -16.8, lon:  173.4, type: 'crater' },
+  { name: "Daedalus",         lat:  -5.9, lon:  179.3, type: 'crater' },
+  { name: "King",             lat:   5.0, lon:  120.5, type: 'crater' },
+  { name: "Jules Verne",      lat: -35.0, lon: -146.0, type: 'crater' },
+
+    // Far north
+  { name: "Birmingham",        lat:  65.1, lon: -115.0, type: 'crater' },
+  { name: "Paschen",           lat:  65.0, lon: -139.0, type: 'crater' }, 
+  { name: "Poncelet",          lat:  75.8, lon: -54.8,  type: 'crater' }, 
+  { name: "Oenopides",         lat:  57.8, lon: -64.0,  type: 'crater' },
+
+  // Northern mid-latitudes
+  { name: "Birkhoff",          lat:  58.7, lon: -146.0, type: 'crater' },
+  { name: "Larmor",            lat:  28.6, lon: -123.0, type: 'crater' },
+  { name: "Minkowski",         lat:  56.0, lon: -146.0, type: 'crater' },
+  { name: "Richardson",        lat:  48.1, lon: -101.0, type: 'crater' },
+
+  // Equatorial region
+  { name: "Lorentz",           lat:  -0.7, lon: -97.5,  type: 'crater' },
+  { name: "Nernst",            lat:  15.6, lon: -98.6,  type: 'crater' },
+  { name: "Einstein",          lat:  16.0, lon: -88.5,  type: 'crater' },
+  { name: "Coulomb",           lat:   9.4, lon: -103.0, type: 'crater' },
+  { name: "Pettit",            lat: -45.4, lon: -109.0, type: 'crater' },
+  { name: "Shaler",            lat: -32.8, lon: -85.0,  type: 'crater' },
+
+  // Southern mid-latitudes
+  { name: "Pettit",            lat: -45.4, lon: -109.0, type: 'crater' },
+  { name: "Shaler",            lat: -32.8, lon: -85.0,  type: 'crater' },
+  { name: "Maunder",           lat: -48.0, lon: -93.0,  type: 'crater' },
+
+  // Far south
+  { name: "Drygalski",         lat: -79.0, lon: -87.0,  type: 'crater' },
+  { name: "Scott",             lat: -82.1, lon: -49.9,  type: 'crater' },
+  { name: "Amundsen",          lat: -84.5, lon:   0.0,  type: 'crater' },
+
+  // Maria (seas) ──────────────────────────────────────────────────────
   { name: "Mare Imbrium",       lat:  32.8, lon:  -15.6, type: 'mare' },
   { name: "Mare Tranquillitatis", lat: 8.5, lon:   31.4, type: 'mare' },
   { name: "Mare Serenitatis",   lat:  28.0, lon:   17.5, type: 'mare' },
@@ -60,11 +130,36 @@ export const FEATURES = [
   { name: "Mare Marginis",      lat:  13.3, lon:   86.1, type: 'mare' },
   { name: "Mare Anguis",        lat:  22.6, lon:   67.7, type: 'mare' },
   { name: "Mare Orientale",     lat: -20.0, lon:  -95.0, type: 'mare' },
-  // Apollo Landing Sites
+  
+  // Additional maria and large basins
+  { name: "Mare Nectaris",    lat: -15.2, lon:   35.5, type: 'mare' },
+  { name: "Mare Cognitum",    lat: -10.0, lon:  -23.1, type: 'mare' },
+  { name: "Mare Insularum",   lat:   7.5, lon:  -30.9, type: 'mare' },
+  { name: "Mare Smythii",     lat:   1.3, lon:   87.5, type: 'mare' },
+  { name: "Mare Australe",    lat: -38.9, lon:   93.0, type: 'mare' },
+  { name: "Mare Ingenii",     lat: -33.7, lon:  163.5, type: 'mare' },
+  { name: "Mare Moscoviense", lat:  27.3, lon:  147.9, type: 'mare' },
+  { name: "Lacus Mortis",     lat:  27.0, lon:   25.0, type: 'mare' },
+  { name: "Sinus Iridum",     lat:  44.1, lon:  -31.5, type: 'mare' },
+  { name: "Lacus Autumni",     lat: -41.0, lon: -83.9,  type: 'mare' },
+
+  // Apollo Landing Sites ─────────────────────────────────────────────────
   { name: "Apollo 11",          lat:   0.67, lon:  23.47, type: 'landing' },
   { name: "Apollo 12",          lat:  -3.01, lon: -23.42, type: 'landing' },
   { name: "Apollo 14",          lat:  -3.64, lon: -17.47, type: 'landing' },
   { name: "Apollo 15",          lat:  26.13, lon:   3.63, type: 'landing' },
   { name: "Apollo 16",          lat:  -8.97, lon:  15.50, type: 'landing' },
   { name: "Apollo 17",          lat:  20.19, lon:  30.77, type: 'landing' },
+
+  // Mountain ranges ─────────────────────────────────────────────────────
+  { name: "Montes Apenninus", lat:  20.0, lon:    1.0, type: 'mountain' },
+  { name: "Montes Alpes",     lat:  48.0, lon:    2.0, type: 'mountain' },
+  { name: "Montes Caucasus",  lat:  38.0, lon:   10.0, type: 'mountain' },
+  { name: "Montes Carpatus",  lat:  15.0, lon:  -25.0, type: 'mountain' },
+  { name: "Montes Jura",      lat:  47.0, lon:  -36.0, type: 'mountain' },
+
+  // Valles ─────────────────────────────────────────────────────────────
+  { name: "Vallis Alpes",     lat:  49.2, lon:    3.6, type: 'valley' },
+  { name: "Vallis Schröteri", lat:  26.2, lon:  -50.8, type: 'valley' },
+
 ];
