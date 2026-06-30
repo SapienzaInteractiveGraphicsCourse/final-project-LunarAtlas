@@ -1,15 +1,13 @@
 import * as THREE from 'three';
 
-// Directions are from the Moon toward the object in the sky.
 export const SUN_DIRECTION = new THREE.Vector3(-0.36, 0.28, 0.89).normalize();
-export const EARTH_DIRECTION = new THREE.Vector3(0.95, 0.18, -0.25).normalize();
+export const EARTH_DIRECTION = new THREE.Vector3(0, 0, 1).normalize();
 
 export function setupLighting(scene, moonRadius = 10) {
   const lights = new THREE.Group();
   lights.name = 'Physical moon lighting';
 
-  // Space has no ambient sky light. This tiny floor keeps unlit details barely readable.
-  lights.add(new THREE.AmbientLight(0x05070c, 0.025));
+  lights.add(new THREE.AmbientLight(0xfff4df, 0.1));
 
   const sunlight = new THREE.DirectionalLight(0xfff4df, 4.8);
   sunlight.name = 'Sunlight';

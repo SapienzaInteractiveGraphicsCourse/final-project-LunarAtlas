@@ -96,7 +96,7 @@ export function getStarfield({numStars = 1000} = {}) {
 
 export function addEarthAndSun(scene, moonRadius = 10) {
   const earthMoonDistance = 240;
-  const earthRadius = moonRadius * 0.37;
+  const earthRadius = moonRadius * 0.50;
   const earthPosition = EARTH_DIRECTION.clone().multiplyScalar(earthMoonDistance);
 
   const textureLoader = new THREE.TextureLoader();

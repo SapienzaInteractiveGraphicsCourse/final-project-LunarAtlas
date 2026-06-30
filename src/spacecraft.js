@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { EARTH_DIRECTION, SUN_DIRECTION } from './lighting.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 export class Spacecraft {
@@ -74,5 +75,5 @@ export class Spacecraft {
 }
 
 export function solarPanelsAnimation(spacecraft_solar_panels){
-    spacecraft_solar_panels.rotation.y += 0.01;
+    spacecraft_solar_panels.lookAt(SUN_DIRECTION);
 }
