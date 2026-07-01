@@ -9,7 +9,7 @@ export function setupLighting(scene, moonRadius = 10) {
 
   lights.add(new THREE.AmbientLight(0xfff4df, 0.1));
 
-  const sunlight = new THREE.DirectionalLight(0xfff4df, 4.8);
+  const sunlight = new THREE.DirectionalLight(0xfff4df, 4.0);
   sunlight.name = 'Sunlight';
   sunlight.position.copy(SUN_DIRECTION).multiplyScalar(800);
   sunlight.target.position.set(0, 0, 0);
