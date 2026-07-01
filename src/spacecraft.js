@@ -11,7 +11,7 @@ export class Spacecraft {
         this.orbitLon = 0;
         this.orbitLat = 0;
         this.orbitRadius = orbitRadius;
-        this.orbitSpeed = 0.0001;
+        this.orbitSpeed = 0.001;
         this.loadPromise = this.load();
     }
 
@@ -75,5 +75,9 @@ export class Spacecraft {
 }
 
 export function solarPanelsAnimation(spacecraft_solar_panels){
-    spacecraft_solar_panels.lookAt(SUN_DIRECTION);
+    const panelWorldPos = new THREE.Vector3();
+    spacecraft_solar_panels.getWorldPosition(panelWorldPos);
+    const sunPosition = panelWorldPos.clone().add(SUN_DIRECTION.clone());
+    const offset = new THREE.Vector3(4.7, -0.28, 0.36);
+    spacecraft_solar_panels.lookAt(sunPosition.add(offset));
 }

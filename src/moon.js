@@ -54,11 +54,11 @@ export function createMoon(renderer, moon_radius) {
 }
 
 export function createMoonAtmoshpere(moon_radius){
-    const atmGeo = new THREE.SphereGeometry(moon_radius+0.2, 64, 64);
+    const atmGeo = new THREE.SphereGeometry(moon_radius+0.1, 64, 64);
     const atmMat = new THREE.MeshBasicMaterial({
       color: 0xaabbdd,
       transparent: true,
-      opacity: 0.035,
+      opacity: 0.025,
       side: THREE.FrontSide,
       depthWrite: false,
     });
