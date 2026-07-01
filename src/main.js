@@ -5,6 +5,7 @@ import { positionCamera } from './cameras.js';
 import { setupLighting } from './lighting.js';
 import { Spacecraft, solarPanelsAnimation } from './spacecraft.js';
 import { createLabelOverlay } from './label_overlay.js';
+import { createFeatureInfoPanel } from './feature_info_panel.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // CONSTANTS & VARS
@@ -174,10 +175,15 @@ window.addEventListener('resize', () => {
 
 // ─── Labels ──────────────────────────────────────────────────────────────────
 const labelOverlay = createLabelOverlay(moon_radius); //3D Label Overlay
+const featurePanel = createFeatureInfoPanel();
 const craterLabel = document.getElementById('crater-label');
 const latLabel    = document.getElementById('lat');
 const lonLabel    = document.getElementById('lon');
 const cameraModeLabel = document.getElementById('camera-mode');
+
+labelOverlay.setOnFeatureClick(async feature => {
+  await featurePanel.showFeature(feature);
+});
 
 //─── Animations ───────────────────────────────────────────────────────────────
 

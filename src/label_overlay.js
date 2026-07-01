@@ -13,6 +13,7 @@ function angularDist(lat1, lon1, lat2, lon2) {
 
 export function createLabelOverlay(moon_radius) {
   const labelContainer = document.getElementById('label-container');
+  let onFeatureClick = null;
 
   const featureData = FEATURES.map(f => {
     const latR = f.lat * Math.PI / 180;
@@ -26,10 +27,26 @@ export function createLabelOverlay(moon_radius) {
 
     const el = document.createElement('div');
     el.className = `moon-label moon-label--${f.type}`;
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('aria-label', `Show details for ${f.name}`);
     el.innerHTML = `<span class="moon-label__dot"></span><span class="moon-label__text">${f.name}</span>`;
     labelContainer.appendChild(el);
+    const feature = { ...f, worldPos, el };
 
-    return { ...f, worldPos, el };
+    el.addEventListener('click', event => {
+      event.stopPropagation();
+      if (onFeatureClick) onFeatureClick(feature);
+    });
+
+    el.addEventListener('keydown', event => {
+      if ((event.key === 'Enter' || event.key === ' ') && onFeatureClick) {
+        event.preventDefault();
+        onFeatureClick(feature);
+      }
+    });
+
+    return feature;
   });
 
   function update(activeCamera, cameraPos) {
@@ -86,5 +103,9 @@ export function createLabelOverlay(moon_radius) {
     return bestDist < 15 ? best : null;
   }
 
-  return { update, getNearestFeature };
+  function setOnFeatureClick(callback) {
+    onFeatureClick = callback;
+  }
+
+  return { update, getNearestFeature, setOnFeatureClick };
 }
