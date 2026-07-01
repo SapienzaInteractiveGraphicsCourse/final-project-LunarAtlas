@@ -45,7 +45,7 @@ export function createLabelOverlay(moon_radius) {
       const normal = f.worldPos.clone().normalize();
       const dot = normal.dot(camDir);
 
-      if (dot > -0.08) {
+      if (dot > -0.30) {
         f.el.style.display = 'none';
         continue;
       }
@@ -61,7 +61,7 @@ export function createLabelOverlay(moon_radius) {
         continue;
       }
 
-      const opacity = Math.min(1, (Math.abs(dot) - 0.08) / 0.17);
+      const opacity = Math.min(1, (Math.abs(dot) - 0.30) / 0.20);
 
       f.el.style.display = 'flex';
       f.el.style.transform = `translate(${sx}px, ${sy}px) scale(${scaleFactor})`;

@@ -11,7 +11,7 @@ export class Spacecraft {
         this.orbitLon = 0;
         this.orbitLat = 0;
         this.orbitRadius = orbitRadius;
-        this.orbitSpeed = 0.001;
+        this.orbitSpeed = 0.0001;
         this.loadPromise = this.load();
     }
 
