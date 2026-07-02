@@ -19,7 +19,7 @@ export class Spacecraft {
         try {
             const gltf = await this.loader.loadAsync(this.glbPath);
             this.model = gltf.scene;
-            this.model.scale.set(0.005, 0.005, 0.005);
+            this.model.scale.set(0.0005, 0.0005, 0.0005);
             this.isLoaded = true;
             return this.model;
         } catch (err) {

@@ -128,11 +128,11 @@ const spacecraft_bounds = new THREE.Box3().setFromObject(spacecraft.model);
 const spacecraft_sphere = new THREE.Sphere();
 spacecraft_bounds.getBoundingSphere(spacecraft_sphere);
 
-const sat_min_distance = Math.max(spacecraft_sphere.radius * 0.6, 0.05);
-const sat_min_outward_offset = Math.max(moon_radius * 0.005, 0.08);
+const sat_min_distance = Math.max(spacecraft_sphere.radius * 0.0001, 0.001);
+const sat_min_outward_offset = Math.max(moon_radius * 0.0005, 0.008);
 const sat_initial_distance = Math.max(1, sat_min_distance);
 
-const sat_camera = new THREE.PerspectiveCamera(60, W() / H(), 0.01, 2000);
+const sat_camera = new THREE.PerspectiveCamera(60, W() / H(), 0.0001, 2000);
 const sat_camera_pos = positionCamera(sat_camera, spacecraft.model, getOutwardOffset(spacecraft.model, sat_initial_distance));
 
 scene.add(sat_camera);
