@@ -204,20 +204,29 @@ function animate(){
   //currently active camera and navigation camera position update
   renderer.render(scene, active_camera);
 
-  // Update location HUD
-  const latDeg = (nav_camera_pos.lat * 180 / Math.PI).toFixed(2);
-  const lonDeg = (nav_camera_pos.lon * 180 / Math.PI).toFixed(2);
-  const ns = latDeg >= 0 ? '' : '-';
-  const ew = lonDeg >= 0 ? '' : '-';
-  latLabel.textContent = `Lat: ${ns}${Math.abs(latDeg)}°`;
-  lonLabel.textContent = `Lon: ${ew}${Math.abs(lonDeg)}°`;
+  const isNavigatorCamera = active_camera === nav_camera;
 
-  const crater = labelOverlay.getNearestFeature(nav_camera_pos.lat, nav_camera_pos.lon);
-  craterLabel.textContent  = crater ? crater.name : '—';
-  craterLabel.style.opacity = crater ? '1' : '0.3';
+  if (isNavigatorCamera) {
+    // Update location HUD
+    const latDeg = (nav_camera_pos.lat * 180 / Math.PI).toFixed(2);
+    const lonDeg = (nav_camera_pos.lon * 180 / Math.PI).toFixed(2);
+    const ns = latDeg >= 0 ? '' : '-';
+    const ew = lonDeg >= 0 ? '' : '-';
+    latLabel.textContent = `Lat: ${ns}${Math.abs(latDeg)}°`;
+    lonLabel.textContent = `Lon: ${ew}${Math.abs(lonDeg)}°`;
+
+    const crater = labelOverlay.getNearestFeature(nav_camera_pos.lat, nav_camera_pos.lon);
+    craterLabel.textContent = crater ? crater.name : '—';
+    craterLabel.style.opacity = crater ? '1' : '0.3';
+  } else {
+    craterLabel.textContent = 'ROBOT ARM CONTROLS';
+    craterLabel.style.opacity = '1';
+    latLabel.textContent = 'Q/A Arm1 • W/S Arm2 • E/D Arm3';
+    lonLabel.textContent = 'R/F Arm4 • T/G Arm5';
+  }
 
   // Update camera mode display
-  cameraModeLabel.textContent = `CAMERA: ${active_camera === nav_camera ? 'NAVIGATOR' : 'SPACECRAFT'}`;
+  cameraModeLabel.textContent = `CAMERA: ${isNavigatorCamera ? 'NAVIGATOR' : 'SPACECRAFT'}`;
 
   // Update 3D labels on screen
   labelOverlay.update(active_camera, active_camera_pos);
