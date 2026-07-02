@@ -81,3 +81,39 @@ export function solarPanelsAnimation(spacecraft_solar_panels){
     const offset = new THREE.Vector3(4.7, -0.28, 0.36);
     spacecraft_solar_panels.lookAt(sunPosition.add(offset));
 }
+
+export function createBigArmsKeyboardAnimation(spacecraftModel, rotationSpeed = 1.2) {
+    if (!spacecraftModel) throw new Error('Spacecraft model is required.');
+    const getJoint = (n) => spacecraftModel.getObjectByName(`Big_Arm_${n}`);
+    const joints = [getJoint(1), getJoint(2), getJoint(3), getJoint(4),  getJoint(5)];
+    if (joints.some((joint) => !joint)) throw new Error('Big Arm 1, 2, 3 not found in gateway_core.glb.');
+
+    const keyMap = [
+        { plus: 'q', minus: 'a', joint: joints[0] },
+        { plus: 'w', minus: 's', joint: joints[1] },
+        { plus: 'e', minus: 'd', joint: joints[2] },
+        { plus: 'r', minus: 'f', joint: joints[3] },
+        { plus: 't', minus: 'g', joint: joints[4] }
+    ];
+    const pressed = new Set();
+    const clock = new THREE.Clock();
+
+    window.addEventListener('keydown', (event) => pressed.add(event.key.toLowerCase()));
+    window.addEventListener('keyup', (event) => pressed.delete(event.key.toLowerCase()));
+    console.log('Big Arm controls: Q/A -> arm1, W/S -> arm2, E/D -> arm3, R/F -> arm4, T/G -> arm5');
+
+    return {
+        update() {
+            const step = rotationSpeed * clock.getDelta();
+            for (const { plus, minus, joint } of keyMap) {
+                const dir = (pressed.has(plus) ? 1 : 0) - (pressed.has(minus) ? 1 : 0);
+                const joint_number = parseInt(joint.name.replace("Big_Arm_", ""));
+                if (dir !== 0) {
+                    if ([1,2].includes(joint_number)) joint.rotation.y += dir * step;
+                    else if ([3].includes(joint_number)) joint.rotation.z += dir * step;
+                    else joint.rotation.x += dir * step;
+                }
+            }
+        }
+    };
+}

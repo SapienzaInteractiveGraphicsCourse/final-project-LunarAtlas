@@ -3,7 +3,7 @@ import { getStarfield, addEarthAndSun } from './spaceEnvironment.js';
 import { createMoon, createMoonAtmoshpere } from './moon.js';
 import { positionCamera } from './cameras.js';
 import { setupLighting } from './lighting.js';
-import { Spacecraft, solarPanelsAnimation } from './spacecraft.js';
+import { Spacecraft, solarPanelsAnimation, createBigArmsKeyboardAnimation } from './spacecraft.js';
 import { createLabelOverlay } from './label_overlay.js';
 import { createFeatureInfoPanel } from './feature_info_panel.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -146,6 +146,7 @@ configureOrbitControls(sat_controls, sat_min_distance, 12);
 //Other stuff
 let active_camera = nav_camera;
 let active_camera_pos = nav_camera_pos;
+const bigArmsAnimation = createBigArmsKeyboardAnimation(spacecraft.model);
 
 document.getElementById('loading').classList.add('hidden');
 
@@ -197,6 +198,7 @@ function animate(){
 
   //Spacecraft Animation
   solarPanelsAnimation(spacecraft_solar_panels);
+  bigArmsAnimation.update();
   active_camera_pos.updateLatLon();
 
   //currently active camera and navigation camera position update
