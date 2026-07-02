@@ -96,7 +96,7 @@ export function createBigArmsKeyboardAnimation(spacecraftModel, rotationSpeed = 
         { plus: 't', minus: 'g', joint: joints[4] }
     ];
     const pressed = new Set();
-    const clock = new THREE.Clock();
+    let lastUpdateTime = performance.now();
 
     window.addEventListener('keydown', (event) => pressed.add(event.key.toLowerCase()));
     window.addEventListener('keyup', (event) => pressed.delete(event.key.toLowerCase()));
@@ -104,7 +104,10 @@ export function createBigArmsKeyboardAnimation(spacecraftModel, rotationSpeed = 
 
     return {
         update() {
-            const step = rotationSpeed * clock.getDelta();
+            const now = performance.now();
+            const deltaSeconds = (now - lastUpdateTime) / 1000;
+            lastUpdateTime = now;
+            const step = rotationSpeed * deltaSeconds;
             for (const { plus, minus, joint } of keyMap) {
                 const dir = (pressed.has(plus) ? 1 : 0) - (pressed.has(minus) ? 1 : 0);
                 const joint_number = parseInt(joint.name.replace("Big_Arm_", ""));
