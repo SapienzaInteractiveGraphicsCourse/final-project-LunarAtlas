@@ -7,7 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-src/assets
+src/assets/lroc_color_16bit_srgb_resized.png
 dist
 dist-ssr
 *.local

@@ -6,7 +6,7 @@ export function createMoon(renderer, moon_radius) {
   const texLoader = new THREE.TextureLoader();
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
-  const colorMap = texLoader.load("./src/assets/lroc_color_16bit_srgb.png", tex => {
+  const colorMap = texLoader.load("./src/assets/lroc_color_16bit_srgb_resized.png", tex => {
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = maxAniso;
     tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
@@ -17,7 +17,7 @@ export function createMoon(renderer, moon_radius) {
     tex.needsUpdate = true;
   });
 
-  const disMap = texLoader.load("./src/assets/ldem_64.png", tex => {
+  const disMap = texLoader.load("./src/assets/ldem_64_resized.png", tex => {
     tex.anisotropy = maxAniso;
     tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
     tex.minFilter = THREE.LinearMipMapLinearFilter;
@@ -26,7 +26,7 @@ export function createMoon(renderer, moon_radius) {
     tex.needsUpdate = true;
   });
 
-  const bumpMap = texLoader.load("./src/assets/ldem_64.png", tex => {
+  const bumpMap = texLoader.load("./src/assets/ldem_64_resized.png", tex => {
     tex.anisotropy = maxAniso;
     tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
     tex.minFilter = THREE.LinearMipMapLinearFilter;
