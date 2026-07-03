@@ -6,7 +6,7 @@ export function createMoon(renderer, moon_radius) {
   const texLoader = new THREE.TextureLoader();
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
-  const colorMap = texLoader.load("./src/assets/lroc_color_16bit_srgb_resized.png", tex => {
+  const colorMap = texLoader.load("./src/assets/lroc_color_16bit_srgb.jpg", tex => {
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = maxAniso;
     tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
