@@ -18,12 +18,16 @@
     "tinyglobby": "^0.2.17",
     "vite": "^8.0.16"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "repository": {
     "type": "git",
@@ -34,5 +38,5 @@
   "bugs": {
     "url": "https://github.com/SapienzaInteractiveGraphicsCourse/final-project-riccardoaquilanti/issues"
   },
-  "homepage": "https://github.com/SapienzaInteractiveGraphicsCourse/final-project-riccardoaquilanti#readme"
+  "homepage": "https://aquilaTM.github.io/lunar-atlas/"
 }
