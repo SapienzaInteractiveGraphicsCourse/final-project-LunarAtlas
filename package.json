@@ -27,16 +27,12 @@
     "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d dist"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SapienzaInteractiveGraphicsCourse/final-project-riccardoaquilanti.git"
   },
   "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/SapienzaInteractiveGraphicsCourse/final-project-riccardoaquilanti/issues"
-  },
-  "homepage": "https://sapienzainteractivegraphicscourse.github.io/final-project-LunarAtlas/"
+  "license": "ISC"
 }
