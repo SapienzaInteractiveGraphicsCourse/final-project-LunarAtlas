@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lunar Atlas</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+ 
+    body {
+      background: #000;
+      overflow: hidden;
+      font-family: 'Courier New', monospace;
+      color: #ccc;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+ 
+    #canvas-container {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+ 
+    canvas { display: block; }
+ 
+    /* HUD */
+    #hud {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      display: grid;
+      grid-template-columns: max-content;
+      row-gap: 2px;
+      align-items: flex-start;
+      padding: 18px 22px;
+      background: linear-gradient(180deg, rgba(8, 12, 24, 0.88), rgba(0, 0, 0, 0.8));
+      border: 1px solid rgba(150, 190, 255, 0.2);
+      backdrop-filter: blur(4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      border-radius: 18px;
+      pointer-events: none;
+      user-select: none;
+    }
+ 
+    #hud > h1,
+    #hud > .control {
+      grid-column: 1;
+    }
+ 
+    #hud h1 {
+      font-size: 14px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,1);
+      margin-bottom: 18px;
+      font-weight: bold;
+    }
+ 
+    #hud .control {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: rgba(235,245,255,0.9);
+      line-height: 2;
+      font-weight: lighter;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
+    }
+
+    #hud .control > span{
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      color: rgba(190, 220, 255, 0.95);
+    }
+
+    #hud #camera-mode {
+      margin-top: 6px;
+      font-size: 8px;
+      color: rgba(120,255,160,0.85);
+      font-weight: 600;
+    }
+
+    #hud .hud-legend {
+      margin-top: 10px;
+      font-size: 8px;
+      color: rgba(255,255,255,0.65);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      max-width: 290px;
+      line-height: 1.5;
+    }
+
+    #hud .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.7);
+    }
+ 
+ 
+    #info {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: grid;
+      grid-template-columns: max-content;
+      row-gap: 8px;
+      justify-items: end;
+      text-align: right;
+      padding: 18px 22px;
+      background: linear-gradient(180deg, rgba(8, 12, 24, 0.88), rgba(0, 0, 0, 0.8));
+      border: 1px solid rgba(150, 190, 255, 0.2);
+      backdrop-filter: blur(4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      border-radius: 18px;
+      min-width: 150px;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    #crater-label {
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      color: rgba(190, 220, 255, 0.95);
+      line-height: 1.5;
+      font-weight: 600;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
+    }
+
+    #pos-label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      color: rgba(235,245,255,0.9);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      line-height: 1.6;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
+    }
+ 
+    #loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      z-index: 10;
+      gap: 16px;
+      transition: opacity 0.8s ease;
+    }
+ 
+    #loading.hidden { opacity: 0; pointer-events: none; }
+ 
+    #loading p {
+      font-size: 10px;
+      letter-spacing: 0.4em;
+      color: rgba(200,215,255,0.5);
+      text-transform: uppercase;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+ 
+    .loader-ring {
+      width: 48px;
+      height: 48px;
+      border: 1px solid rgba(200,215,255,0.1);
+      border-top: 1px solid rgba(200,215,255,0.6);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+ 
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+    /* ── 3D Moon Labels ── */
+    #label-container {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .moon-label {
+      position: absolute;
+      top: 0; left: 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transform-origin: left center;
+      white-space: nowrap;
+      will-change: transform, opacity;
+      transition: opacity 0.12s ease;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    .moon-label__dot {
+      flex-shrink: 0;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      border: 1px solid currentColor;
+    }
+
+    .moon-label__text {
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      text-shadow: 1px 1px 2px rgba(0,0,0,1), 0 0 2px rgba(0,0,0,1);
+    }
+
+    /* Craters */
+    .moon-label--crater {
+      color: rgba(160, 220, 255, 1);
+    }
+    .moon-label--crater .moon-label__dot {
+      background: rgba(120, 200, 255, 1);
+    }
+
+    /* Mare */
+    .moon-label--mare {
+      color: rgba(255, 210, 130, 1);
+    }
+    .moon-label--mare .moon-label__text {
+      font-size: 10px;
+      letter-spacing: 0.22em;
+    }
+    .moon-label--mare .moon-label__dot {
+      width: 7px; height: 7px;
+      background: rgba(255, 200, 80, 1);
+    }
+
+    /* Apollo landing sites — green */
+    .moon-label--landing {
+      color: rgba(120, 255, 160, 1);
+    }
+    .moon-label--landing .moon-label__dot {
+      width: 6px; height: 6px;
+      background: rgba(80, 255, 120, 1);
+      border-radius: 2px;
+    }
+    .moon-label--landing .moon-label__text {
+      font-size: 10px;
+    }
+
+    /* Mountain Ranges */
+    .moon-label--mountain {
+      color: rgb(255, 0, 119);
+    }
+    .moon-label--mountain .moon-label__dot {
+      width: 6px; height: 6px;
+      background: rgb(255, 0, 119);
+      border-radius: 2px;
+    }
+    .moon-label--mountain .moon-label__text {
+      font-size: 10px;
+      text-shadow: 0 0 2px rgba(0,0,0,1);
+    }
+
+    /* Valleys */
+    .moon-label--valley {
+      color: rgba(120, 220, 255, 1);
+    }
+    .moon-label--valley .moon-label__dot {
+      width: 6px; height: 6px;
+      background: rgba(120, 220, 255, 1);
+      border-radius: 2px;
+    }
+    .moon-label--valley .moon-label__text {
+      font-size: 10px;
+    }
+
+    #feature-panel {
+      position: absolute;
+      left: 15px;
+      bottom: 15px;
+      width: min(390px, calc(100vw - 30px));
+      max-height: min(52vh, 470px);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px 14px 12px;
+      background: linear-gradient(180deg, rgba(8, 12, 24, 0.93), rgba(0, 0, 0, 0.87));
+      border: 1px solid rgba(150, 190, 255, 0.22);
+      border-radius: 16px;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(5px);
+      color: rgba(235, 245, 255, 0.95);
+      z-index: 11;
+      overflow: hidden;
+    }
+
+    .feature-panel--hidden {
+      display: none !important;
+    }
+
+    .feature-panel__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    #feature-panel-title {
+      font-size: 14px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #fff;
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    #feature-panel-close {
+      border: 1px solid rgba(170, 210, 255, 0.35);
+      color: rgba(190, 220, 255, 0.95);
+      background: rgba(35, 52, 81, 0.45);
+      border-radius: 8px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    #feature-panel-close:hover {
+      background: rgba(48, 74, 119, 0.65);
+    }
+
+    #feature-panel-source {
+      margin: 0;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(200, 225, 255, 0.85);
+    }
+
+    #feature-panel-source a {
+      color: rgba(170, 220, 255, 0.95);
+    }
+
+    #feature-panel-description {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.45;
+      letter-spacing: 0.02em;
+      color: rgba(235, 245, 255, 0.95);
+      overflow: auto;
+      max-height: 148px;
+      padding-right: 4px;
+    }
+
+    #feature-panel-images {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .feature-panel__image-link {
+      display: block;
+      border: 1px solid rgba(150, 190, 255, 0.2);
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.35);
+    }
+
+    .feature-panel__image {
+      width: 100%;
+      height: 105px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .feature-panel__images-empty {
+      grid-column: 1 / -1;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: rgba(210, 225, 245, 0.75);
+      text-transform: uppercase;
+      margin: 2px 0 0;
+    }
+
+  </style>
+  <script type="module" crossorigin src="/assets/index-cSMKdKWp.js"></script>
+</head>
+<body>
+ 
+<div id="loading">
+  <div class="loader-ring"></div>
+  <p>Loading Moon</p>
+</div>
+ 
+<div id="canvas-container">
+  <!-- 3D label overlay -->
+  <div id="label-container"></div>
+
+  <div id="hud">
+    <h1>Lunar Atlas</h1>
+    <div class="control"><span>DRAG</span> Rotate</div>
+    <div class="control"><span>SCROLL</span> Zoom</div>
+    <div class="control"><span>PRESS "C"</span> Change Camera</div>
+    <div id="camera-mode" class="control">CAMERA: NAVIGATOR</div>
+    <div class="control hud-legend">
+      <span class="legend-item"><span style="color:rgba(160,220,255,0.9);">●</span> Crater</span>
+      <span class="legend-item"><span style="color:rgba(255,210,130,0.9);">●</span> Mare</span>
+      <span class="legend-item"><span style="color:rgba(120,255,160,0.9);">▪</span> Landing Site</span>
+      <span class="legend-item"><span style="color:rgba(255, 0, 119,0.9);">▲</span> Mountain Range</span>
+      <span class="legend-item"><span style="color:rgba(120,220,255,0.9);">▬</span> Valley</span>
+    </div>
+  </div>
+
+  <div id="info">
+    <div id="crater-label"></div>
+    <div id="pos-label">
+      <span id="lat">0.00°</span>
+      <span id="lon">0.00°</span>
+    </div>
+  </div>
+
+  <aside id="feature-panel" class="feature-panel--hidden" aria-live="polite">
+    <div class="feature-panel__header">
+      <h2 id="feature-panel-title">Feature Details</h2>
+      <button id="feature-panel-close" type="button" aria-label="Close feature details">×</button>
+    </div>
+    <p id="feature-panel-source">Source: <a id="feature-panel-source-link" href="#" target="_blank" rel="noopener noreferrer">Wikipedia</a></p>
+    <p id="feature-panel-description">Click any visible feature label to load its details and real imagery.</p>
+    <div id="feature-panel-images"></div>
+  </aside>
+</div>
+
