@@ -6,34 +6,43 @@ export function createMoon(renderer, moon_radius) {
   const texLoader = new THREE.TextureLoader();
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
-  const colorMap = texLoader.load("./src/assets/lroc_color_16bit_srgb.jpg", tex => {
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = maxAniso;
-    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
-    tex.minFilter = THREE.LinearMipMapLinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    tex.generateMipmaps = true;
-    tex.mipmapsBias = -1.0;
-    tex.needsUpdate = true;
-  });
+  const colorMap = texLoader.load(
+    new URL('./assets/lroc_color_16bit_srgb.jpg', import.meta.url).href, 
+    tex => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = maxAniso;
+      tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.minFilter = THREE.LinearMipMapLinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      tex.generateMipmaps = true;
+      tex.mipmapsBias = -1.0;
+      tex.needsUpdate = true;
+    }
+  );
 
-  const disMap = texLoader.load("./src/assets/ldem_64_resized.png", tex => {
-    tex.anisotropy = maxAniso;
-    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
-    tex.minFilter = THREE.LinearMipMapLinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    tex.generateMipmaps = true;
-    tex.needsUpdate = true;
-  });
+  const disMap = texLoader.load(
+    new URL('./assets/ldem_64_resized.png', import.meta.url).href,
+    tex => {
+      tex.anisotropy = maxAniso;
+      tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.minFilter = THREE.LinearMipMapLinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      tex.generateMipmaps = true;
+      tex.needsUpdate = true;
+    }
+  );
 
-  const bumpMap = texLoader.load("./src/assets/ldem_64_resized.png", tex => {
-    tex.anisotropy = maxAniso;
-    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
-    tex.minFilter = THREE.LinearMipMapLinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    tex.generateMipmaps = true;
-    tex.needsUpdate = true;
-  });
+  const bumpMap = texLoader.load(
+    new URL('./assets/ldem_64_resized.png', import.meta.url).href,
+    tex => {
+      tex.anisotropy = maxAniso;
+      tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.minFilter = THREE.LinearMipMapLinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      tex.generateMipmaps = true;
+      tex.needsUpdate = true;
+    }
+  );
 
   const moonMat = new THREE.MeshStandardMaterial({
     map: colorMap,

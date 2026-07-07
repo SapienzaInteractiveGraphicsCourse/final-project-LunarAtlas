@@ -100,7 +100,7 @@ export function addEarthAndSun(scene, moonRadius = 10) {
   const earthPosition = EARTH_DIRECTION.clone().multiplyScalar(earthMoonDistance);
 
   const textureLoader = new THREE.TextureLoader();
-  const earthTexture = textureLoader.load('./src/assets/earth_texture.jpg');
+  const earthTexture = textureLoader.load(new URL('./assets/earth_texture.jpg', import.meta.url).href);
   earthTexture.colorSpace = THREE.SRGBColorSpace;
 
   const earth = new THREE.Mesh(

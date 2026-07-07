@@ -104,7 +104,7 @@ addEarthAndSun(scene, moon_radius);
 setupLighting(scene, moon_radius);
  
 // ─── Orbiting Spacecraft ──────────────────────────────────────────────────────────
-const spacecraft = new Spacecraft('./src/assets/gateway_core.glb', moon_radius +1);
+const spacecraft = new Spacecraft(new URL('./assets/gateway_core.glb', import.meta.url).href, moon_radius +1);
 await spacecraft.loadPromise;
 
 scene.add(spacecraft.model);
