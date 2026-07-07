@@ -14,7 +14,7 @@
     "postcss": "^8.5.15",
     "rolldown": "^1.0.3",
     "source-map-js": "^1.2.1",
-    "three": "^0.184.0",
+    "three": "^0.185.1",
     "tinyglobby": "^0.2.17",
     "vite": "^8.0.16"
   },
@@ -31,7 +31,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SapienzaInteractiveGraphicsCourse/final-project-riccardoaquilanti.git"
+    "url": "git+https://github.com/SapienzaInteractiveGraphicsCourse/final-project-LunarAtlas.git"
   },
   "author": "",
   "license": "ISC"
