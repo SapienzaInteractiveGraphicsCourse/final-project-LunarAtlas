@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { getStarfield, addEarthAndSun } from './spaceEnvironment.js';
+import { getStarfield, addEarth, addSun } from './spaceEnvironment.js';
 import { createMoon, createMoonAtmoshpere } from './moon.js';
 import { positionCamera } from './cameras.js';
 import { setupLighting } from './lighting.js';
@@ -98,7 +98,8 @@ scene.add(createMoonAtmoshpere(moon_radius))
 // ─── Space Environment ────────────────────────────────────────────────────────────────
 const stars = getStarfield({numStars: 2000});
 scene.add(stars);
-addEarthAndSun(scene, moon_radius);
+addEarth(scene, moon_radius);
+addSun(scene);
 
 // ─── Lighting ─────────────────────────────────────────────────────────────────
 setupLighting(scene, moon_radius);

@@ -95,7 +95,7 @@ export function getStarfield({numStars = 1000} = {}) {
   return stars;
 }
 
-export function addEarthAndSun(scene, moonRadius = 10) {
+export function addEarth(scene, moonRadius = 10) {
   const earthMoonDistance = 240;
   const earthRadius = moonRadius * 0.50;
   const earthPosition = EARTH_DIRECTION.clone().multiplyScalar(earthMoonDistance);
@@ -171,7 +171,9 @@ export function addEarthAndSun(scene, moonRadius = 10) {
   );
   earthGlow.position.copy(earth.position);
   scene.add(earthGlow);
+}
 
+export function addSun(scene){
   const sun = new THREE.Sprite(new THREE.SpriteMaterial({
     map: makeSunTexture(),
     color: 0xfff1c0,
@@ -181,11 +183,12 @@ export function addEarthAndSun(scene, moonRadius = 10) {
     blending: THREE.AdditiveBlending,
     toneMapped: false,
   }));
+
   sun.position.copy(SUN_DIRECTION).multiplyScalar(1300);
   sun.scale.setScalar(85);
   sun.userData.isSun = true;
   sun.userData.name = 'Sun';
   scene.add(sun);
 
-  return { earth, atmosphere, earthGlow, sun };
+  return sun;
 }
