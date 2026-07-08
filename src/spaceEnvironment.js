@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { EARTH_DIRECTION, SUN_DIRECTION } from './lighting.js';
 
+
 function makeSunTexture() {
   const canvas = document.createElement('canvas');
   canvas.width = 256;
@@ -107,9 +108,10 @@ export function addEarthAndSun(scene, moonRadius = 10) {
     new THREE.SphereGeometry(earthRadius, 64, 64),
     new THREE.MeshStandardMaterial({
       map: earthTexture,
-      emissive: 0x020810,
-      emissiveIntensity: 0.35,
-      roughness: 0.65,
+      emissive: 0xffffff,
+      emissiveMap: earthTexture,
+      emissiveIntensity: 0.28,
+      roughness: 0.5,
       metalness: 0,
     })
   );
@@ -118,31 +120,57 @@ export function addEarthAndSun(scene, moonRadius = 10) {
   earth.userData.name = 'Earth';
   scene.add(earth);
 
-  const clouds = new THREE.Mesh(
-    new THREE.SphereGeometry(earthRadius * 1.02, 64, 64),
-    new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.24,
-      roughness: 0.9,
-      depthWrite: false,
-    })
-  );
-  clouds.position.copy(earth.position);
-  scene.add(clouds);
-
   const atmosphere = new THREE.Mesh(
     new THREE.SphereGeometry(earthRadius * 1.08, 32, 32),
     new THREE.MeshBasicMaterial({
-      color: 0x87ceeb,
+      color: 0x3b8cff,
       transparent: true,
-      opacity: 0.15,
-      side: THREE.BackSide,
+      opacity: 0.22,
       depthWrite: false,
     })
   );
   atmosphere.position.copy(earth.position);
   scene.add(atmosphere);
+
+  const earthGlow = new THREE.Mesh(
+    new THREE.SphereGeometry(earthRadius * 1.035, 48, 48),
+    new THREE.ShaderMaterial({
+      uniforms: {
+        glowColor: { value: new THREE.Color(0x4aa8ff) },
+        glowStrength: { value: 0.45 },
+        glowPower: { value: 3.0 },
+      },
+      vertexShader: `
+        varying vec3 vNormal;
+        varying vec3 vViewDirection;
+
+        void main() {
+          vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+          vNormal = normalize(normalMatrix * normal);
+          vViewDirection = normalize(cameraPosition - worldPosition.xyz);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 glowColor;
+        uniform float glowStrength;
+        uniform float glowPower;
+        varying vec3 vNormal;
+        varying vec3 vViewDirection;
+
+        void main() {
+          float rim = pow(1.0 - max(dot(normalize(vNormal), normalize(vViewDirection)), 0.0), glowPower);
+          gl_FragColor = vec4(glowColor, rim * glowStrength);
+        }
+      `,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.BackSide,
+    })
+  );
+  earthGlow.position.copy(earth.position);
+  scene.add(earthGlow);
 
   const sun = new THREE.Sprite(new THREE.SpriteMaterial({
     map: makeSunTexture(),
@@ -159,12 +187,5 @@ export function addEarthAndSun(scene, moonRadius = 10) {
   sun.userData.name = 'Sun';
   scene.add(sun);
 
-  function animateEarth() {
-    earth.rotation.y += 0.0001;
-    clouds.rotation.y += 0.0002;
-    requestAnimationFrame(animateEarth);
-  }
-  animateEarth();
-
-  return { earth, clouds, atmosphere, sun };
+  return { earth, atmosphere, earthGlow, sun };
 }

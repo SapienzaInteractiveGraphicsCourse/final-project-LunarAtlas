@@ -95,7 +95,7 @@ scene.add(moon);
 scene.add(createMoonAtmoshpere(moon_radius))
  
 
-// ─── Starfield ────────────────────────────────────────────────────────────────
+// ─── Space Environment ────────────────────────────────────────────────────────────────
 const stars = getStarfield({numStars: 2000});
 scene.add(stars);
 addEarthAndSun(scene, moon_radius);
