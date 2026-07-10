@@ -1,13 +1,18 @@
 import * as THREE from 'three';
 import { EARTH_DIRECTION, SUN_DIRECTION } from './lighting.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 export class Spacecraft {
-    constructor(glbPath, orbitRadius) {
+    constructor(glbPath, orbitRadius, options = {}) {
         this.glbPath = glbPath;
         this.model = null;
         this.isLoaded = false;
         this.loader = new GLTFLoader();
+        this.dracoLoader = new DRACOLoader();
+        this.dracoLoader.setDecoderPath(`${import.meta.env.BASE_URL}draco/gltf/`);
+        this.loader.setDRACOLoader(this.dracoLoader);
+        this.scale = options.scale ?? 0.0005;
         this.orbitLon = 0;
         this.orbitLat = 0;
         this.orbitRadius = orbitRadius;
@@ -19,7 +24,7 @@ export class Spacecraft {
         try {
             const gltf = await this.loader.loadAsync(this.glbPath);
             this.model = gltf.scene;
-            this.model.scale.set(0.0005, 0.0005, 0.0005);
+            this.model.scale.setScalar(this.scale);
             this.isLoaded = true;
             return this.model;
         } catch (err) {
@@ -82,11 +87,19 @@ export function solarPanelsAnimation(spacecraft_solar_panels){
     spacecraft_solar_panels.lookAt(sunPosition.add(offset));
 }
 
+function createDisabledAnimationController() {
+    return {
+        enabled: false,
+        update() {},
+        destroy() {}
+    };
+}
+
 export function createBigArmsKeyboardAnimation(spacecraftModel, rotationSpeed = 1.2) {
-    if (!spacecraftModel) throw new Error('Spacecraft model is required.');
+    if (!spacecraftModel) return createDisabledAnimationController();
     const getJoint = (n) => spacecraftModel.getObjectByName(`Big_Arm_${n}`);
     const joints = [getJoint(1), getJoint(2), getJoint(3), getJoint(4),  getJoint(5)];
-    if (joints.some((joint) => !joint)) throw new Error('Big Arm 1, 2, 3 not found in gateway_core.glb.');
+    if (joints.some((joint) => !joint)) return createDisabledAnimationController();
 
     const keyMap = [
         { plus: 'q', minus: 'a', joint: joints[0] },
@@ -97,12 +110,15 @@ export function createBigArmsKeyboardAnimation(spacecraftModel, rotationSpeed = 
     ];
     const pressed = new Set();
     let lastUpdateTime = performance.now();
+    const handleKeyDown = (event) => pressed.add(event.key.toLowerCase());
+    const handleKeyUp = (event) => pressed.delete(event.key.toLowerCase());
 
-    window.addEventListener('keydown', (event) => pressed.add(event.key.toLowerCase()));
-    window.addEventListener('keyup', (event) => pressed.delete(event.key.toLowerCase()));
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
     console.log('Big Arm controls: Q/A -> arm1, W/S -> arm2, E/D -> arm3, R/F -> arm4, T/G -> arm5');
 
     return {
+        enabled: true,
         update() {
             const now = performance.now();
             const deltaSeconds = (now - lastUpdateTime) / 1000;
@@ -117,6 +133,11 @@ export function createBigArmsKeyboardAnimation(spacecraftModel, rotationSpeed = 
                     else joint.rotation.x += dir * step;
                 }
             }
+        },
+        destroy() {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+            pressed.clear();
         }
     };
 }

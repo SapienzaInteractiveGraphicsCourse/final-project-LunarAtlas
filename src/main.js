@@ -4,19 +4,31 @@ import { createMoon, createMoonAtmoshpere } from './moon.js';
 import { positionCamera } from './cameras.js';
 import { setupLighting } from './lighting.js';
 import { Spacecraft, solarPanelsAnimation, createBigArmsKeyboardAnimation } from './spacecraft.js';
+import { SPACECRAFT_CATALOG } from './spacecraft_catalog.js';
 import { createLabelOverlay } from './label_overlay.js';
 import { createFeatureInfoPanel } from './feature_info_panel.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // CONSTANTS & VARS
 const moon_radius = 10;
-const _subjectWorldPos = new THREE.Vector3();
-const _previousTarget = new THREE.Vector3();
-const _targetDelta = new THREE.Vector3();
-const _offset = new THREE.Vector3();
-const _outward = new THREE.Vector3();
-const _perp = new THREE.Vector3();
+const subjectWorldPos = new THREE.Vector3();
+const previousTarget = new THREE.Vector3();
+const targetDelta = new THREE.Vector3();
+const offset = new THREE.Vector3();
+const outward = new THREE.Vector3();
+const perp = new THREE.Vector3();
 
+let activeSpacecraftIndex = 0;
+let activeSpacecraftEntry = SPACECRAFT_CATALOG[activeSpacecraftIndex];
+let isSwitchingSpacecraft = false;
+let spacecraft = null;
+let spacecraft_solar_panels = null;
+let sat_min_distance = 0.001;
+const sat_minoutwardoffset = Math.max(moon_radius * 0.0005, 0.008);
+let sat_camera_pos = null;
+let bigArmsAnimation = createBigArmsKeyboardAnimation();
+
+//Orbit Controls
 function configureOrbitControls(controls, minDistance, maxDistance) {
   controls.enableDamping = true;
   controls.dampingFactor = 0.8;
@@ -28,46 +40,46 @@ function configureOrbitControls(controls, minDistance, maxDistance) {
 }
 
 function getOutwardOffset(subject, distance) {
-  subject.getWorldPosition(_subjectWorldPos);
-  return _subjectWorldPos.lengthSq() === 0
+  subject.getWorldPosition(subjectWorldPos);
+  return subjectWorldPos.lengthSq() === 0
     ? new THREE.Vector3(0, 0, distance)
-    : _subjectWorldPos.clone().normalize().multiplyScalar(distance);
+    : subjectWorldPos.clone().normalize().multiplyScalar(distance);
 }
 
 function updateTrackingOrbitCamera(camera, controls, subject, minDistance, minOutwardOffset) {
-  _previousTarget.copy(controls.target);
-  subject.getWorldPosition(_subjectWorldPos);
+  previousTarget.copy(controls.target);
+  subject.getWorldPosition(subjectWorldPos);
 
-  _targetDelta.subVectors(_subjectWorldPos, _previousTarget);
-  camera.position.add(_targetDelta);
-  controls.target.copy(_subjectWorldPos);
+  targetDelta.subVectors(subjectWorldPos, previousTarget);
+  camera.position.add(targetDelta);
+  controls.target.copy(subjectWorldPos);
   controls.update();
 
-  _offset.subVectors(camera.position, _subjectWorldPos);
-  _outward.copy(_subjectWorldPos);
-  if (_outward.lengthSq() === 0) {
-    _outward.set(0, 0, 1);
+  offset.subVectors(camera.position, subjectWorldPos);
+  outward.copy(subjectWorldPos);
+  if (outward.lengthSq() === 0) {
+    outward.set(0, 0, 1);
   } else {
-    _outward.normalize();
+    outward.normalize();
   }
 
-  if (_offset.lengthSq() === 0) {
-    _offset.copy(_outward).multiplyScalar(minDistance);
+  if (offset.lengthSq() === 0) {
+    offset.copy(outward).multiplyScalar(minDistance);
   }
 
-  const outwardDistance = _offset.dot(_outward);
-  _perp.copy(_offset).addScaledVector(_outward, -outwardDistance);
+  const outwardDistance = offset.dot(outward);
+  perp.copy(offset).addScaledVector(outward, -outwardDistance);
 
   const safeOutwardDistance = Math.max(
     outwardDistance,
     minOutwardOffset,
-    Math.sqrt(Math.max(minDistance * minDistance - _perp.lengthSq(), 0))
+    Math.sqrt(Math.max(minDistance * minDistance - perp.lengthSq(), 0))
   );
 
-  _offset.copy(_perp).addScaledVector(_outward, safeOutwardDistance);
-  camera.position.copy(_subjectWorldPos).add(_offset);
-  camera.lookAt(_subjectWorldPos);
-  controls.target.copy(_subjectWorldPos);
+  offset.copy(perp).addScaledVector(outward, safeOutwardDistance);
+  camera.position.copy(subjectWorldPos).add(offset);
+  camera.lookAt(subjectWorldPos);
+  controls.target.copy(subjectWorldPos);
 }
 
 // ─── Scene Setup ─────────────────────────────────────────────────────────────
@@ -87,7 +99,7 @@ container.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 
-// ─── Moon ─────────────────────────────────────────────────────────────────────
+// ─── Moon ───────────────────────────────────────────────────────────────────────────
 const moon = createMoon(renderer, moon_radius);
 scene.add(moon);
 
@@ -95,59 +107,118 @@ scene.add(moon);
 scene.add(createMoonAtmoshpere(moon_radius))
  
 
-// ─── Space Environment ────────────────────────────────────────────────────────────────
+// ─── Space Environment ──────────────────────────────────────────────────────────────
 const stars = getStarfield({numStars: 2000});
 scene.add(stars);
 addEarth(scene, moon_radius);
 addSun(scene);
 
-// ─── Lighting ─────────────────────────────────────────────────────────────────
+// ─── Lighting ───────────────────────────────────────────────────────────────────────
 setupLighting(scene, moon_radius);
- 
-// ─── Orbiting Spacecraft ──────────────────────────────────────────────────────────
-const spacecraft = new Spacecraft(new URL('./assets/gateway_core.glb', import.meta.url).href, moon_radius +1);
-await spacecraft.loadPromise;
 
-scene.add(spacecraft.model);
+// ─── Cameras  ───────────────────────────────────────────────────────────────────────
 
-const spacecraft_solar_panels = spacecraft.getModelPart("Maxar_PPE_Array");
-
-// ─── Cameras  ────────────────────────────────────────────────────────────────────
-
-// ─── Main Camera (Navigation) ────────────────────────────────────────────────────
+// ─── Main Camera (Navigation) ───────────────────────────────────────────────────────
 const nav_camera = new THREE.PerspectiveCamera(60, W() / H(), 0.1, 2000);
 const nav_camera_pos = positionCamera(nav_camera, moon, new THREE.Vector3(moon_radius+10, 0, 0));
 moon.add(nav_camera);
 
-// Navigation Camera Controls
+// ─── Main Camera Controls ───────────────────────────────────────────────────────────
 const nav_controls = new OrbitControls(nav_camera, renderer.domElement);
 nav_controls.target.copy(moon.position);
 configureOrbitControls(nav_controls, 12, 50);
 
-// ─── Secondary Camera (Satellite, orbit-controllable around the spacecraft) ──────
-const spacecraft_bounds = new THREE.Box3().setFromObject(spacecraft.model);
-const spacecraft_sphere = new THREE.Sphere();
-spacecraft_bounds.getBoundingSphere(spacecraft_sphere);
-
-const sat_min_distance = Math.max(spacecraft_sphere.radius * 0.0001, 0.001);
-const sat_min_outward_offset = Math.max(moon_radius * 0.0005, 0.008);
-const sat_initial_distance = Math.max(1, sat_min_distance);
-
+// ─── Secondary Camera (Satellite, orbit-controllable around the spacecraft) ─────────
 const sat_camera = new THREE.PerspectiveCamera(60, W() / H(), 0.0001, 2000);
-const sat_camera_pos = positionCamera(sat_camera, spacecraft.model, getOutwardOffset(spacecraft.model, sat_initial_distance));
-
 scene.add(sat_camera);
 
-// Satellite Camera Controls
+// ─── Satellite Camera Controls ──────────────────────────────────────────────────────
 const sat_controls = new OrbitControls(sat_camera, renderer.domElement);
-spacecraft.model.getWorldPosition(_subjectWorldPos);
-sat_controls.target.copy(_subjectWorldPos);
+sat_controls.target.set(0, 0, 0);
 configureOrbitControls(sat_controls, sat_min_distance, 12);
+
+// ─── Orbiting Spacecraft ────────────────────────────────────────────────────────────
+const spacecraftTitle = document.getElementById('spacecraft-title');
+const spacecraftDescription = document.getElementById('spacecraft-description');
+const spacecraftPage = document.getElementById('spacecraft-page');
+const spacecraftPrevButton = document.getElementById('spacecraft-prev');
+const spacecraftNextButton = document.getElementById('spacecraft-next');
+
+async function setActiveSpacecraft(nextIndex) {
+  if (isSwitchingSpacecraft) return;
+
+  isSwitchingSpacecraft = true;
+  spacecraftPrevButton.disabled = true;
+  spacecraftNextButton.disabled = true;
+
+  try {
+    const nextEntry = SPACECRAFT_CATALOG[nextIndex];
+    const nextSpacecraft = new Spacecraft(nextEntry.modelUrl, moon_radius + 1, { scale: nextEntry.scale });
+    await nextSpacecraft.loadPromise;
+
+    if (spacecraft) {
+      scene.remove(spacecraft.model);
+      bigArmsAnimation.destroy();
+    }
+
+    spacecraft = nextSpacecraft;
+    activeSpacecraftIndex = nextIndex;
+    activeSpacecraftEntry = nextEntry;
+    spacecraft_solar_panels = activeSpacecraftEntry.solarPanelPartName
+      ? spacecraft.getModelPart(activeSpacecraftEntry.solarPanelPartName)
+      : null;
+    bigArmsAnimation = createBigArmsKeyboardAnimation(
+      activeSpacecraftEntry.hasRoboticArmControls ? spacecraft.model : null
+    );
+
+    scene.add(spacecraft.model);
+
+    const spacecraftBounds = new THREE.Box3().setFromObject(spacecraft.model);
+    const spacecraftSphere = new THREE.Sphere();
+    spacecraftBounds.getBoundingSphere(spacecraftSphere);
+    sat_min_distance = Math.max(spacecraftSphere.radius * 0.0001, 0.001);
+
+    const sat_initial_distance = Math.max(1, sat_min_distance);
+    sat_camera_pos = positionCamera(
+      sat_camera,
+      spacecraft.model,
+      getOutwardOffset(spacecraft.model, sat_initial_distance)
+    );
+    spacecraft.model.getWorldPosition(subjectWorldPos);
+    sat_controls.target.copy(subjectWorldPos);
+    configureOrbitControls(sat_controls, sat_min_distance, 12);
+
+    if (active_camera === sat_camera) {
+      active_camera_pos = sat_camera_pos;
+    }
+
+    updateSpacecraftSelector();
+  } finally {
+    spacecraftPrevButton.disabled = false;
+    spacecraftNextButton.disabled = false;
+    isSwitchingSpacecraft = false;
+  }
+}
+
+function updateSpacecraftSelector() {
+  spacecraftTitle.textContent = activeSpacecraftEntry.name;
+  spacecraftDescription.textContent = activeSpacecraftEntry.description;
+  spacecraftPage.textContent = `${activeSpacecraftIndex + 1} / ${SPACECRAFT_CATALOG.length}`;
+}
+
 
 //Other stuff
 let active_camera = nav_camera;
 let active_camera_pos = nav_camera_pos;
-const bigArmsAnimation = createBigArmsKeyboardAnimation(spacecraft.model);
+await setActiveSpacecraft(activeSpacecraftIndex);
+
+spacecraftPrevButton.addEventListener('click', async () => {
+  await setActiveSpacecraft((activeSpacecraftIndex - 1 + SPACECRAFT_CATALOG.length) % SPACECRAFT_CATALOG.length);
+});
+
+spacecraftNextButton.addEventListener('click', async () => {
+  await setActiveSpacecraft((activeSpacecraftIndex + 1) % SPACECRAFT_CATALOG.length);
+});
 
 document.getElementById('loading').classList.add('hidden');
 
@@ -182,6 +253,7 @@ const craterLabel = document.getElementById('crater-label');
 const latLabel    = document.getElementById('lat');
 const lonLabel    = document.getElementById('lon');
 const cameraModeLabel = document.getElementById('camera-mode');
+const spacecraftSelector = document.getElementById('spacecraft-selector');
 
 labelOverlay.setOnFeatureClick(async feature => {
   await featurePanel.showFeature(feature);
@@ -195,10 +267,12 @@ function animate(){
 
   //Spacecraft Orbit
   spacecraft.updateOrbitAnimation();
-  updateTrackingOrbitCamera(sat_camera, sat_controls, spacecraft.model, sat_min_distance, sat_min_outward_offset);
+  updateTrackingOrbitCamera(sat_camera, sat_controls, spacecraft.model, sat_min_distance, sat_minoutwardoffset);
 
   //Spacecraft Animation
-  solarPanelsAnimation(spacecraft_solar_panels);
+  if (spacecraft_solar_panels) {
+    solarPanelsAnimation(spacecraft_solar_panels);
+  }
   bigArmsAnimation.update();
   active_camera_pos.updateLatLon();
 
@@ -220,14 +294,21 @@ function animate(){
     craterLabel.textContent = crater ? crater.name : '—';
     craterLabel.style.opacity = crater ? '1' : '0.3';
   } else {
-    craterLabel.textContent = 'ROBOT ARM CONTROLS';
+    craterLabel.textContent = activeSpacecraftEntry.hasRoboticArmControls
+      ? 'ROBOT ARM CONTROLS'
+      : activeSpacecraftEntry.name.toUpperCase();
     craterLabel.style.opacity = '1';
-    latLabel.textContent = 'Q/A Arm1 • W/S Arm2 • E/D Arm3';
-    lonLabel.textContent = 'R/F Arm4 • T/G Arm5';
+    latLabel.textContent = activeSpacecraftEntry.hasRoboticArmControls
+      ? 'Q/A Arm1 • W/S Arm2 • E/D Arm3'
+      : 'Orbiting lunar spacecraft';
+    lonLabel.textContent = activeSpacecraftEntry.hasRoboticArmControls
+      ? 'R/F Arm4 • T/G Arm5'
+      : 'Use arrows to change model';
   }
 
   // Update camera mode display
   cameraModeLabel.textContent = `CAMERA: ${isNavigatorCamera ? 'NAVIGATOR' : 'SPACECRAFT'}`;
+  spacecraftSelector.style.display = isNavigatorCamera ? 'none' : 'grid';
 
   // Update 3D labels on screen
   labelOverlay.update(active_camera, active_camera_pos);
