@@ -120,6 +120,78 @@
       user-select: none;
     }
 
+    /* Spacecraft selector */
+
+    #spacecraft-selector {
+      position: absolute;
+      left: 15px;
+      bottom: 15px;
+      width: min(400px, calc(100vw - 30px));
+      display: none;
+      grid-template-columns: 36px 1fr 36px;
+      gap: 8px;
+      align-items: center;
+      padding: 14px;
+      background: linear-gradient(180deg, rgba(8, 12, 24, 0.9), rgba(0, 0, 0, 0.84));
+      border: 1px solid rgba(150, 190, 255, 0.25);
+      border-radius: 14px;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(5px);
+      z-index: 11;
+      pointer-events: auto;
+    }
+
+    .spacecraft-selector__arrow {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid rgba(170, 210, 255, 0.35);
+      color: rgba(220, 235, 255, 0.95);
+      background: rgba(35, 52, 81, 0.5);
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      font-family: inherit;
+    }
+
+    .spacecraft-selector__arrow:hover {
+      background: rgba(48, 74, 119, 0.75);
+    }
+
+    .spacecraft-selector__content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    #spacecraft-title {
+      margin: 0;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #fff;
+      line-height: 1.3;
+    }
+
+    #spacecraft-description {
+      margin: 0;
+      font-size: 14px;
+      letter-spacing: 0.05em;
+      line-height: 1.45;
+      color: rgba(220, 235, 255, 0.9);
+    }
+
+    #spacecraft-page {
+      margin: 0;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(165, 210, 255, 0.9);
+    }
+
+    /* Info panel labels */
+
     #crater-label {
       font-size: 12px;
       letter-spacing: 0.15em;
@@ -176,6 +248,7 @@
     @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
 
     /* ── 3D Moon Labels ── */
+    
     #label-container {
       position: absolute;
       inset: 0;
@@ -386,7 +459,7 @@
     }
 
   </style>
-  <script type="module" crossorigin src="/final-project-LunarAtlas/assets/index-DvNQURKf.js"></script>
+  <script type="module" crossorigin src="/final-project-LunarAtlas/assets/index-CSnuGSsw.js"></script>
 </head>
 
 <body>
@@ -421,6 +494,16 @@
       <span id="lat">0.00°</span>
       <span id="lon">0.00°</span>
     </div>
+  </div>
+
+  <div id="spacecraft-selector" aria-live="polite">
+    <button id="spacecraft-prev" class="spacecraft-selector__arrow" type="button" aria-label="Previous spacecraft">←</button>
+    <div class="spacecraft-selector__content">
+      <h2 id="spacecraft-title">Loading spacecraft...</h2>
+      <p id="spacecraft-description">Loading spacecraft description...</p>
+      <p id="spacecraft-page">0 / 0</p>
+    </div>
+    <button id="spacecraft-next" class="spacecraft-selector__arrow" type="button" aria-label="Next spacecraft">→</button>
   </div>
 
   <aside id="feature-panel" class="feature-panel--hidden" aria-live="polite">
