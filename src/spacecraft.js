@@ -95,7 +95,7 @@ function createDisabledAnimationController() {
     };
 }
 
-export function createBigArmsKeyboardAnimation(spacecraftModel, rotationSpeed = 1.2) {
+export function createRobotArmsAnimation(spacecraftModel, rotationSpeed = 1.2) {
     if (!spacecraftModel) return createDisabledAnimationController();
     const getJoint = (n) => spacecraftModel.getObjectByName(`Big_Arm_${n}`);
     const joints = [getJoint(1), getJoint(2), getJoint(3), getJoint(4),  getJoint(5)];

@@ -3,7 +3,7 @@ export const SPACECRAFT_CATALOG = [
     id: 'gateway-core',
     name: 'Gateway Core',
     description:
-      'NASA Gateway core module concept for sustained lunar orbit operations, with large solar arrays and articulated robotic arms.',
+      'The Lunar Gateway is a small, NASA‑led international space station that will orbit the Moon in a special near‑rectilinear halo orbit (NRHO), serving as the first long‑term human outpost beyond low‑Earth orbit.',
     modelUrl: new URL('./assets/gateway_core.glb', import.meta.url).href,
     solarPanelPartName: 'Maxar_PPE_Array',
     hasRoboticArmControls: true

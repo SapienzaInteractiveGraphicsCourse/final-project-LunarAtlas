@@ -3,7 +3,7 @@ import { getStarfield, addEarth, addSun } from './spaceEnvironment.js';
 import { createMoon, createMoonAtmoshpere } from './moon.js';
 import { positionCamera } from './cameras.js';
 import { setupLighting } from './lighting.js';
-import { Spacecraft, solarPanelsAnimation, createBigArmsKeyboardAnimation } from './spacecraft.js';
+import { Spacecraft, solarPanelsAnimation, createRobotArmsAnimation } from './spacecraft.js';
 import { SPACECRAFT_CATALOG } from './spacecraft_catalog.js';
 import { createLabelOverlay } from './label_overlay.js';
 import { createFeatureInfoPanel } from './feature_info_panel.js';
@@ -26,15 +26,47 @@ let spacecraft_solar_panels = null;
 let sat_min_distance = 0.001;
 const sat_minoutwardoffset = Math.max(moon_radius * 0.0005, 0.008);
 let sat_camera_pos = null;
-let bigArmsAnimation = createBigArmsKeyboardAnimation();
+let bigArmsAnimation = createRobotArmsAnimation();
 
-//Orbit Controls
+// ─── Scene Setup ─────────────────────────────────────────────────────────────────────
+const container = document.getElementById('canvas-container');
+const W = () => window.innerWidth;
+const H = () => window.innerHeight;
+ 
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(W(), H());
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+container.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+
+// ─── Moon ───────────────────────────────────────────────────────────────────────────
+const moon = createMoon(renderer, moon_radius);
+scene.add(moon);
+scene.add(createMoonAtmoshpere(moon_radius))
+ 
+
+// ─── Space Environment ──────────────────────────────────────────────────────────────
+const stars = getStarfield({numStars: 2000});
+scene.add(stars);
+addEarth(scene, moon_radius);
+addSun(scene);
+
+// ─── Lighting ───────────────────────────────────────────────────────────────────────
+setupLighting(scene, moon_radius);
+
+// ─── Cameras  ───────────────────────────────────────────────────────────────────────
 function configureOrbitControls(controls, minDistance, maxDistance) {
   controls.enableDamping = true;
   controls.dampingFactor = 0.8;
   controls.rotateSpeed = 0.4;
   controls.zoomSpeed = 0.8;
-  controls.enablePan = false; // dragging should only orbit
+  controls.enablePan = false;
   controls.minDistance = minDistance;
   controls.maxDistance = maxDistance;
 }
@@ -81,42 +113,6 @@ function updateTrackingOrbitCamera(camera, controls, subject, minDistance, minOu
   camera.lookAt(subjectWorldPos);
   controls.target.copy(subjectWorldPos);
 }
-
-// ─── Scene Setup ─────────────────────────────────────────────────────────────
-const container = document.getElementById('canvas-container');
-const W = () => window.innerWidth;
-const H = () => window.innerHeight;
- 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(W(), H());
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFShadowMap;
-container.appendChild(renderer.domElement);
-
-const scene = new THREE.Scene();
-
-// ─── Moon ───────────────────────────────────────────────────────────────────────────
-const moon = createMoon(renderer, moon_radius);
-scene.add(moon);
-
-// Moon Atmosphere 
-scene.add(createMoonAtmoshpere(moon_radius))
- 
-
-// ─── Space Environment ──────────────────────────────────────────────────────────────
-const stars = getStarfield({numStars: 2000});
-scene.add(stars);
-addEarth(scene, moon_radius);
-addSun(scene);
-
-// ─── Lighting ───────────────────────────────────────────────────────────────────────
-setupLighting(scene, moon_radius);
-
-// ─── Cameras  ───────────────────────────────────────────────────────────────────────
 
 // ─── Main Camera (Navigation) ───────────────────────────────────────────────────────
 const nav_camera = new THREE.PerspectiveCamera(60, W() / H(), 0.1, 2000);
@@ -167,7 +163,7 @@ async function setActiveSpacecraft(nextIndex) {
     spacecraft_solar_panels = activeSpacecraftEntry.solarPanelPartName
       ? spacecraft.getModelPart(activeSpacecraftEntry.solarPanelPartName)
       : null;
-    bigArmsAnimation = createBigArmsKeyboardAnimation(
+    bigArmsAnimation = createRobotArmsAnimation(
       activeSpacecraftEntry.hasRoboticArmControls ? spacecraft.model : null
     );
 
