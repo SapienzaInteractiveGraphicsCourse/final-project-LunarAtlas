@@ -9,7 +9,7 @@ export const SPACECRAFT_CATALOG = [
     modelUrl: new URL('./assets/gateway_core.glb', import.meta.url).href,
     solarPanelPartName: 'Maxar_PPE_Array',
     hasRoboticArmControls: true,
-    orientation: new THREE.Vector3(-Math.PI/6 + 0.05, -Math.PI/2, 0)
+    orientation: new THREE.Vector3(-Math.PI/6 +0.1, -Math.PI/2, 0.1)
   },
   {
     id: 'lunar-reconnaissance-orbiter',

@@ -26,7 +26,7 @@ let spacecraft_solar_panels = null;
 let sat_min_distance = 0.001;
 const sat_minoutwardoffset = Math.max(moon_radius * 0.0005, 0.008);
 let sat_camera_pos = null;
-let bigArmsAnimation = createRobotArmsAnimation();
+let robotArmAnimation = createRobotArmsAnimation();
 
 // ─── Scene Setup ─────────────────────────────────────────────────────────────────────
 const container = document.getElementById('canvas-container');
@@ -154,7 +154,7 @@ async function setActiveSpacecraft(nextIndex) {
 
     if (spacecraft) {
       scene.remove(spacecraft.model);
-      bigArmsAnimation.destroy();
+      robotArmAnimation.destroy();
     }
 
     spacecraft = nextSpacecraft;
@@ -163,7 +163,7 @@ async function setActiveSpacecraft(nextIndex) {
     spacecraft_solar_panels = activeSpacecraftEntry.solarPanelPartName
       ? spacecraft.getModelPart(activeSpacecraftEntry.solarPanelPartName)
       : null;
-    bigArmsAnimation = createRobotArmsAnimation(
+    robotArmAnimation = createRobotArmsAnimation(
       activeSpacecraftEntry.hasRoboticArmControls ? spacecraft.model : null
     );
 
@@ -269,7 +269,7 @@ function animate(){
   if (spacecraft_solar_panels) {
     solarPanelsAnimation(spacecraft_solar_panels);
   }
-  bigArmsAnimation.update();
+  robotArmAnimation.update();
   active_camera_pos.updateLatLon();
 
   //currently active camera and navigation camera position update
