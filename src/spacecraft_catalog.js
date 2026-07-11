@@ -9,7 +9,7 @@ export const SPACECRAFT_CATALOG = [
     modelUrl: new URL('./assets/gateway_core.glb', import.meta.url).href,
     solarPanelPartName: 'Maxar_PPE_Array',
     hasRoboticArmControls: true,
-    orientation: new THREE.Vector3(0,0,0)
+    orientation: new THREE.Vector3(-Math.PI/6 + 0.05, -Math.PI/2, 0)
   },
   {
     id: 'lunar-reconnaissance-orbiter',
@@ -25,6 +25,6 @@ export const SPACECRAFT_CATALOG = [
     description:
       'The iconic two-stage lander that carried Apollo crews from lunar orbit to the Moon surface and back.',
     modelUrl: new URL('./assets/apollo_lunar_module.glb', import.meta.url).href,
-    orientation: new THREE.Vector3(0,0,0)
+    orientation: new THREE.Vector3(0,0,Math.PI/2)
   }
 ];

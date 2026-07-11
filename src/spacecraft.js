@@ -68,8 +68,8 @@ export class Spacecraft {
 
         this.model.position.set(x, y, z);
         this.model.lookAt(0, 0, 0);
-        this.model.rotateX(this.orientation.x);
         this.model.rotateY(this.orientation.y);
+        this.model.rotateX(this.orientation.x);
         this.model.rotateZ(this.orientation.z);
     }
 
