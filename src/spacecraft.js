@@ -17,6 +17,7 @@ export class Spacecraft {
         this.orbitLat = 0;
         this.orbitRadius = orbitRadius;
         this.orbitSpeed = 0.0001;
+        this.orientation = options.orientation ?? new THREE.Vector3(0,0,0);
         this.loadPromise = this.load();
     }
 
@@ -67,8 +68,9 @@ export class Spacecraft {
 
         this.model.position.set(x, y, z);
         this.model.lookAt(0, 0, 0);
-        this.model.rotateY(-Math.PI/2);
-        this.model.rotateX(-Math.PI/6 + 0.05);
+        this.model.rotateX(this.orientation.x);
+        this.model.rotateY(this.orientation.y);
+        this.model.rotateZ(this.orientation.z);
     }
 
 

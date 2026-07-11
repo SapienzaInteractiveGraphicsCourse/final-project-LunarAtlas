@@ -149,7 +149,7 @@ async function setActiveSpacecraft(nextIndex) {
 
   try {
     const nextEntry = SPACECRAFT_CATALOG[nextIndex];
-    const nextSpacecraft = new Spacecraft(nextEntry.modelUrl, moon_radius + 1, { scale: nextEntry.scale });
+    const nextSpacecraft = new Spacecraft(nextEntry.modelUrl, moon_radius + 1, { scale: nextEntry.scale, orientation: nextEntry.orientation });
     await nextSpacecraft.loadPromise;
 
     if (spacecraft) {
@@ -203,7 +203,7 @@ function updateSpacecraftSelector() {
 }
 
 
-//Other stuff
+// ─── User Interaction ────────────────────────────────────────────────────────────────
 let active_camera = nav_camera;
 let active_camera_pos = nav_camera_pos;
 await setActiveSpacecraft(activeSpacecraftIndex);
