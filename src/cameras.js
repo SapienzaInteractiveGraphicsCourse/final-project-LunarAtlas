@@ -1,14 +1,14 @@
 // camera.js
 import * as THREE from 'three';
 
-const _subjectWorldPos = new THREE.Vector3();
-const _cameraWorldPos = new THREE.Vector3();
-const _offset = new THREE.Vector3();
+const subjectWorldPos = new THREE.Vector3();
+const cameraWorldPos = new THREE.Vector3();
+const offset = new THREE.Vector3();
 
 export function positionCamera(camera, subject, position) {
-  subject.getWorldPosition(_subjectWorldPos);
-  camera.position.copy(_subjectWorldPos).add(position);
-  camera.lookAt(_subjectWorldPos);
+  subject.getWorldPosition(subjectWorldPos);
+  camera.position.copy(subjectWorldPos).add(position);
+  camera.lookAt(subjectWorldPos);
 
   const camera_position = {
     subject,
@@ -16,14 +16,14 @@ export function positionCamera(camera, subject, position) {
     distance: position.length(),
 
     updateLatLon() {
-      camera.getWorldPosition(_cameraWorldPos);
-      subject.getWorldPosition(_subjectWorldPos);
+      camera.getWorldPosition(cameraWorldPos);
+      subject.getWorldPosition(subjectWorldPos);
 
-      _offset.subVectors(_cameraWorldPos, _subjectWorldPos);
-      this.distance = _offset.length();
-      _offset.normalize();
-      this.lat = Math.asin(Math.max(-1, Math.min(1, _offset.y)));
-      this.lon = Math.atan2(_offset.x, _offset.z);
+      offset.subVectors(cameraWorldPos, subjectWorldPos);
+      this.distance = offset.length();
+      offset.normalize();
+      this.lat = Math.asin(Math.max(-1, Math.min(1, offset.y)));
+      this.lon = Math.atan2(offset.x, offset.z);
 
       return this;
     }
