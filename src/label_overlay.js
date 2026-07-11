@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { FEATURES } from './features_database.js';
 
-const _labelVec = new THREE.Vector3();
+const labelVec = new THREE.Vector3();
 
 function angularDist(lat1, lon1, lat2, lon2) {
   const toR = Math.PI / 180;
@@ -49,42 +49,46 @@ export function createLabelOverlay(moon_radius) {
     return feature;
   });
 
-  function update(activeCamera, cameraPos) {
-    const camDir = new THREE.Vector3();
-    activeCamera.getWorldDirection(camDir);
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+function update(activeCamera, cameraPos) {
+  const camWorldPos = new THREE.Vector3();
+  activeCamera.getWorldPosition(camWorldPos);
+  const camDir = new THREE.Vector3();
+  activeCamera.getWorldDirection(camDir);
 
-    const alt = cameraPos.distance;
-    const scaleFactor = Math.max(0.6, Math.min(1.2, 20 / alt));
+  const r2 = moon_radius * moon_radius;
+  const w = window.innerWidth, h = window.innerHeight;
+  const alt = cameraPos.distance;
+  const scaleFactor = Math.max(0.6, Math.min(1.2, 20 / alt));
 
-    for (const f of featureData) {
-      const normal = f.worldPos.clone().normalize();
-      const dot = normal.dot(camDir);
+  for (const f of featureData) {
+    const overHorizon = f.worldPos.dot(camWorldPos) > r2;
 
-      if (dot > -0.30) {
-        f.el.style.display = 'none';
-        continue;
-      }
+    const toFeature = f.worldPos.clone().sub(camWorldPos);
+    const inFront = toFeature.dot(camDir) > 0;
 
-      _labelVec.copy(f.worldPos);
-      _labelVec.project(activeCamera);
-
-      const sx = (_labelVec.x * 0.5 + 0.5) * w;
-      const sy = (-_labelVec.y * 0.5 + 0.5) * h;
-
-      if (sx < 0 || sx > w || sy < 0 || sy > h) {
-        f.el.style.display = 'none';
-        continue;
-      }
-
-      const opacity = Math.min(1, (Math.abs(dot) - 0.30) / 0.20);
-
-      f.el.style.display = 'flex';
-      f.el.style.transform = `translate(${sx}px, ${sy}px) scale(${scaleFactor})`;
-      f.el.style.opacity = opacity.toFixed(3);
+    if (!overHorizon || !inFront) {
+      f.el.style.display = 'none';
+      continue;
     }
+
+    labelVec.copy(f.worldPos).project(activeCamera);
+    const sx = (labelVec.x * 0.5 + 0.5) * w;
+    const sy = (-labelVec.y * 0.5 + 0.5) * h;
+
+    if (sx < 0 || sx > w || sy < 0 || sy > h) {
+      f.el.style.display = 'none';
+      continue;
+    }
+
+    // fade near the horizon edge 
+    const grazing = f.worldPos.dot(camWorldPos) / (moon_radius * camWorldPos.length());
+    const opacity = Math.min(1, Math.max(0, (grazing - moon_radius / camWorldPos.length()) * 8));
+
+    f.el.style.display = 'flex';
+    f.el.style.transform = `translate(${sx}px, ${sy}px) scale(${scaleFactor})`;
+    f.el.style.opacity = opacity.toFixed(3);
   }
+}
 
   function getNearestFeature(lat, lon) {
     const latD = lat * 180 / Math.PI;
