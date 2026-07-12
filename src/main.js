@@ -124,7 +124,7 @@ const nav_controls = new OrbitControls(nav_camera, renderer.domElement);
 nav_controls.target.copy(moon.position);
 configureOrbitControls(nav_controls, 12, 50);
 
-// ─── Secondary Camera (Satellite, orbit-controllable around the spacecraft) ─────────
+// ─── Secondary Camera (Satellite) ───────────────────────────────────────────────────
 const sat_camera = new THREE.PerspectiveCamera(60, W() / H(), 0.0001, 2000);
 scene.add(sat_camera);
 
@@ -242,7 +242,7 @@ window.addEventListener('resize', () => {
   renderer.setSize(W(), H());
 });
 
-// ─── Labels ──────────────────────────────────────────────────────────────────
+// ─── Labels ────────────────────────────────────────────────────────────────────────────
 const labelOverlay = createLabelOverlay(moon_radius); //3D Label Overlay
 const featurePanel = createFeatureInfoPanel();
 const craterLabel = document.getElementById('crater-label');
@@ -255,8 +255,7 @@ labelOverlay.setOnFeatureClick(async feature => {
   await featurePanel.showFeature(feature);
 });
 
-//─── Animations ───────────────────────────────────────────────────────────────
-
+// ─── Animations ─────────────────────────────────────────────────────────────────────────
 function animate(){
   requestAnimationFrame(animate);
   nav_controls.update();
