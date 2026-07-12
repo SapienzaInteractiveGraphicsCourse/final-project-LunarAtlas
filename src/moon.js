@@ -23,11 +23,9 @@ export function createMoon(renderer, moon_radius) {
   const disMap = texLoader.load(
     new URL('./assets/ldem_64_resized.png', import.meta.url).href,
     tex => {
-      tex.anisotropy = maxAniso;
       tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
       tex.minFilter = THREE.LinearMipMapLinearFilter;
       tex.magFilter = THREE.LinearFilter;
-      tex.generateMipmaps = true;
       tex.needsUpdate = true;
     }
   );
